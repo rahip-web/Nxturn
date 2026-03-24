@@ -13,12 +13,6 @@ from dj_rest_auth.serializers import LoginSerializer
 from allauth.account.models import EmailAddress
 from rest_framework import serializers
 
-from .validator import (
-    validate_registration_email,
-    validate_registration_username,
-    validate_registration_password,
-)
-
 
 # Updated model imports to include PostMedia
 from .models import (
@@ -147,38 +141,20 @@ class UserSerializer(serializers.ModelSerializer):
         return None
 
 
-# class CustomRegisterSerializer(RegisterSerializer):
-#     # This field will be used to explicitly validate email uniqueness.
-#     email = serializers.EmailField(
-#         required=True,
-#         # This validator checks if an object with this email already exists in the User model.
-#         validators=[validators.UniqueValidator(queryset=User.objects.all())],
-#     )
-
-#     def custom_signup(self, request, user):
-#         """
-#         You can add custom logic here that runs after a user is created.
-#         For now, we just pass.
-#         """
-#         pass
-
-
 class CustomRegisterSerializer(RegisterSerializer):
-    email = serializers.EmailField(required=True)
+    # This field will be used to explicitly validate email uniqueness.
+    email = serializers.EmailField(
+        required=True,
+        # This validator checks if an object with this email already exists in the User model.
+        validators=[validators.UniqueValidator(queryset=User.objects.all())],
+    )
 
-    def validate_email(self, value):
-        return validate_registration_email(value)
-
-    def validate_username(self, value):
-        return validate_registration_username(value)
-
-    def validate_password1(self, value):
-        return validate_registration_password(value)
-
-    def validate(self, data):
-        if data.get("password1") != data.get("password2"):
-            raise serializers.ValidationError({"password": "Passwords do not match."})
-        return data
+    def custom_signup(self, request, user):
+        """
+        You can add custom logic here that runs after a user is created.
+        For now, we just pass.
+        """
+        pass
 
 
 class ConnectionRequestCreateSerializer(serializers.ModelSerializer):
@@ -1288,6 +1264,9 @@ class MessageCreateSerializer(serializers.Serializer):
         return value
 
 
+# (Find the old CustomPasswordResetConfirmSerializer and replace it with this one)
+
+# (Replace the entire CustomPasswordResetConfirmSerializer class with this)
 
 
 class CustomPasswordResetConfirmSerializer(PasswordResetConfirmSerializer):
@@ -1319,12 +1298,7 @@ class CustomPasswordResetConfirmSerializer(PasswordResetConfirmSerializer):
             "password1": attrs.get("new_password1"),
             "password2": attrs.get("new_password2"),
         }
-        try:
-            validate_registration_password(form_data["password1"])
-        except serializers.ValidationError as ve:
-            # propagate the error in DRF style
-            raise ve
-        # --- END OF CUSTOM VALIDATION ---
+        # --- END OF FIX ---
 
         self.set_password_form = self.set_password_form_class(
             user=self.user, data=form_data
@@ -1341,11 +1315,8 @@ class CustomPasswordResetConfirmSerializer(PasswordResetConfirmSerializer):
 
 class CustomLoginSerializer(LoginSerializer):
     """
-    Custom login serializer that:
-    1. Checks if email is verified
-    2. If not verified, sends verification email and raises error guiding user to verify first
-    3. If verified, allows login
-    4. This matches the post-registration flow where user must verify before accessing account
+    Custom login serializer that resends the verification email if a user
+    with an unverified email address attempts to log in.
     """
 
     def validate(self, attrs):
@@ -1353,7 +1324,7 @@ class CustomLoginSerializer(LoginSerializer):
             # First, run the standard validation from the parent class
             return super().validate(attrs)
         except serializers.ValidationError as e:
-            # --- CHECK IF IT'S AN UNVERIFIED EMAIL ERROR ---
+            # --- THIS IS THE CORRECTED LOGIC ---
             # The error detail from dj-rest-auth is a list of strings.
             # We check if our specific error message is present.
             is_unverified_email_error = (
@@ -1369,17 +1340,9 @@ class CustomLoginSerializer(LoginSerializer):
                         email_address = EmailAddress.objects.get(
                             email__iexact=email_or_username
                         )
-                        # Send verification email
                         email_address.send_confirmation()
-                        
-                        # Raise custom error with verification message
-                        raise serializers.ValidationError({
-                            "detail": "Your email is not verified. Please check your inbox for a verification link. After verifying, you can log in or use the forgot password feature.",
-                            "verification_required": True,
-                            "email": email_or_username
-                        })
                     except EmailAddress.DoesNotExist:
                         pass  # Should not happen in normal flow
 
-            # If it's a different error, re-raise it as-is
+            # CRITICAL: Always re-raise the original exception to ensure the login still fails
             raise e

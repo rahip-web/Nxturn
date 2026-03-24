@@ -1267,7 +1267,7 @@ onUnmounted(() => {
       </div>
 
       <!-- Action Bar -->
-      <div
+        <div
         class="mt-3 sm:mt-4 flex justify-between items-center pl-2 xl:pl-14 border-t border-gray-100 pt-3 sm:pt-4"
       >
         <div class="flex gap-1 sm:gap-2 -ml-1 xl:ml-0">
@@ -1398,7 +1398,7 @@ onUnmounted(() => {
               :class="{
                 'hover:text-orange-600 hover:from-orange-100 hover:to-orange-200 hover:shadow-md cursor-pointer':
                   !showPollCreator,
-                'cursor-not-allowed': showPollCreator,
+                'cursor-not-allowed opacity-50': showPollCreator,
               }"
               :disabled="showPollCreator"
             >
@@ -1420,7 +1420,7 @@ onUnmounted(() => {
               :class="{
                 'hover:text-red-600 hover:from-red-100 hover:to-red-200 hover:shadow-md cursor-pointer':
                   !showPollCreator,
-                'cursor-not-allowed': showPollCreator,
+                'cursor-not-allowed opacity-50': showPollCreator,
               }"
               :disabled="showPollCreator"
             >

@@ -2,9 +2,11 @@
 import { getAvatarUrl } from '@/utils/avatars'
 import { computed, ref, watch, nextTick } from 'vue'
 import { format } from 'date-fns'
+import { debounce } from 'lodash-es'
 import type { Comment } from '@/stores/comment'
 import { useAuthStore } from '@/stores/auth'
 import { useCommentStore } from '@/stores/comment'
+import axiosInstance from '@/services/axiosInstance'
 import MentionAutocomplete from './MentionAutocomplete.vue'
 
 // Font Awesome Icons
@@ -51,11 +53,23 @@ const isEditing = ref(false)
 const editableContent = ref('')
 const showReplyForm = ref(false)
 const replyContent = ref('')
+const replyInputRef = ref<HTMLTextAreaElement | null>(null)
+const isReplyMultiline = ref(false)
 const isSubmittingReply = ref(false)
 const replyError = ref<string | null>(null)
 const showOptionsMenu = ref(false)
 const optionsMenuRef = ref<HTMLDivElement | null>(null)
 const showReplies = ref(false)
+const showMentionDropdown = ref(false)
+const mentionSearchResults = ref<
+  Array<{ id: number; username: string; first_name: string; last_name: string; picture: string }>
+>([])
+const mentionIsLoading = ref(false)
+const mentionActiveIndex = ref(-1)
+const showMentionList = computed(
+  () =>
+    showMentionDropdown.value && (mentionIsLoading.value || mentionSearchResults.value.length > 0),
+)
 
 const isCommentAuthor = computed(() => authStore.currentUser?.id === props.comment.author.id)
 const canReplyToThisComment = computed(() => effectiveDepth.value < MAX_REPLY_DEPTH)
@@ -160,20 +174,22 @@ function toggleReplyForm() {
   if (!showReplyForm.value && !canReplyToThisComment.value) {
     return alert(`Replies are limited to ${MAX_REPLY_DEPTH} level(s).`)
   }
-  showReplyForm.value = !showReplyForm.value
+  const nextState = !showReplyForm.value
+  showReplyForm.value = nextState
   if (showReplyForm.value) {
     isEditing.value = false
     replyContent.value = ''
     replyError.value = null
+    resetMentionState()
     nextTick(() => {
-      // Focus the reply textarea with safer access
-      const textarea = document.querySelector(
-        `[data-comment-reply="${props.comment.id}"]`,
-      ) as HTMLTextAreaElement
-      if (textarea) {
-        textarea.focus()
-      }
+      autoResizeReply()
+      replyInputRef.value?.focus()
     })
+  } else {
+    replyContent.value = ''
+    replyError.value = null
+    resetMentionState()
+    autoResizeReply()
   }
 }
 
@@ -236,6 +252,128 @@ async function handleToggleCommentLike() {
     props.parentPostType,
     props.parentObjectId,
   )
+}
+
+// Watch for mention dropdown changes
+watch(showMentionDropdown, (isOpen) => {
+  if (!isOpen) {
+    mentionSearchResults.value = []
+    mentionActiveIndex.value = -1
+  }
+})
+
+function resetMentionState() {
+  showMentionDropdown.value = false
+  mentionSearchResults.value = []
+  mentionActiveIndex.value = -1
+  mentionIsLoading.value = false
+  searchMentionUsers.cancel?.()
+}
+
+// Mention autocomplete functions
+const searchMentionUsers = debounce(async (query: string) => {
+  if (query.length < 1) {
+    mentionSearchResults.value = []
+    return
+  }
+  mentionIsLoading.value = true
+  try {
+    const response = await axiosInstance.get('/search/users/', {
+      params: { q: query, page_size: 5 },
+    })
+    mentionSearchResults.value = response.data.results
+  } catch (error) {
+    console.error('Failed to search for users:', error)
+    mentionSearchResults.value = []
+  } finally {
+    mentionIsLoading.value = false
+  }
+}, 300)
+
+function checkForMentionInReply(text: string, cursorPosition: number) {
+  const textBeforeCursor = text.slice(0, cursorPosition)
+  const mentionMatch = textBeforeCursor.match(/@([\w.-]*)$/)
+
+  if (mentionMatch) {
+    showMentionDropdown.value = true
+    mentionActiveIndex.value = -1
+    searchMentionUsers(mentionMatch[1])
+  } else {
+    showMentionDropdown.value = false
+  }
+}
+
+function autoResizeReply() {
+  const el = replyInputRef.value
+  if (!el) return
+  el.style.height = 'auto'
+  const maxHeight = 96
+  el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px'
+  isReplyMultiline.value = el.scrollHeight > 44
+}
+
+function handleReplyInput(event: Event) {
+  const target = event.target as HTMLTextAreaElement
+  replyContent.value = target.value
+  autoResizeReply()
+  checkForMentionInReply(target.value, target.selectionStart || 0)
+}
+
+function selectMentionUser(user: any) {
+  const inputElement = replyInputRef.value
+  if (!inputElement) return
+
+  const currentText = replyContent.value
+  const cursorPosition = inputElement.selectionStart || 0
+  const textBeforeCursor = currentText.slice(0, cursorPosition)
+  const mentionStartIndex = textBeforeCursor.lastIndexOf('@')
+
+  if (mentionStartIndex !== -1) {
+    const textBeforeMention = currentText.slice(0, mentionStartIndex)
+    const textAfterCursor = currentText.slice(cursorPosition)
+    const newText = `${textBeforeMention}@${user.username} ${textAfterCursor}`
+    replyContent.value = newText
+    const newCursorPosition = (textBeforeMention + `@${user.username} `).length
+
+    nextTick(() => {
+      inputElement.focus()
+      inputElement.setSelectionRange(newCursorPosition, newCursorPosition)
+    })
+  }
+
+  showMentionDropdown.value = false
+}
+
+function handleMentionKeydown(event: KeyboardEvent) {
+  if (!showMentionDropdown.value || mentionSearchResults.value.length === 0) return
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    mentionActiveIndex.value = (mentionActiveIndex.value + 1) % mentionSearchResults.value.length
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    mentionActiveIndex.value =
+      (mentionActiveIndex.value - 1 + mentionSearchResults.value.length) %
+      mentionSearchResults.value.length
+  } else if (event.key === 'Enter' && mentionActiveIndex.value !== -1) {
+    event.preventDefault()
+    selectMentionUser(mentionSearchResults.value[mentionActiveIndex.value])
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    showMentionDropdown.value = false
+  }
+}
+
+// GIF functionality placeholder
+function handleGifClick() {
+  console.log('GIF picker would open here')
+  alert('GIF functionality would be implemented here with a GIF picker')
+}
+
+// Emoji functionality placeholder
+function handleEmojiClick() {
+  console.log('Emoji picker would open here')
+  alert('Emoji functionality would be implemented here with an emoji picker')
 }
 </script>
 
@@ -421,7 +559,7 @@ async function handleToggleCommentLike() {
       <div v-if="showReplyForm" class="mt-2">
         <form
           @submit.prevent="submitReply"
-          class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-full"
+          class="flex items-center gap-2 px-2.5 sm:px-3 py-2 bg-white border border-gray-100 rounded-full overflow-visible"
         >
           <img
             :src="
@@ -432,34 +570,81 @@ async function handleToggleCommentLike() {
               )
             "
             alt="your avatar"
-            class="w-7 h-7 rounded-full object-cover flex-shrink-0 bg-gray-200"
+            class="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover flex-shrink-0 bg-gray-200"
           />
 
-          <div class="relative flex-1">
-            <MentionAutocomplete
-              :data-comment-reply="comment.id"
-              v-model="replyContent"
+          <div class="relative flex-1 overflow-visible">
+            <textarea
+              ref="replyInputRef"
+              :value="replyContent"
+              rows="1"
               placeholder="Write a reply..."
-              :rows="1"
-              class="w-full text-sm px-4 py-2 pr-24 rounded-full bg-gray-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
-            />
+              :data-comment-reply-input="comment.id"
+              @keydown="handleMentionKeydown"
+              @input="handleReplyInput"
+              :class="[
+                'w-full text-sm sm:text-base px-4 py-2 sm:py-2.5 pr-12 sm:pr-24 bg-gray-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none overflow-y-auto leading-4 sm:leading-5 transition-colors rounded-xl',
+                isReplyMultiline ? 'rounded-2xl' : 'rounded-xl',
+              ]"
+            ></textarea>
 
-            <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              <button
+            <!-- Mention Dropdown -->
+            <div
+              v-show="showMentionList"
+              data-mention-dropdown
+              class="absolute left-0 right-0 top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-56 overflow-y-auto"
+            >
+              <div v-if="mentionIsLoading" class="px-4 py-3 text-sm text-gray-500 text-center">
+                <div class="inline-block">Searching...</div>
+              </div>
+              <div
+                v-else-if="mentionSearchResults.length === 0"
+                class="px-4 py-3 text-sm text-gray-500 text-center"
+              >
+                No users found.
+              </div>
+              <div v-else>
+                <button
+                  v-for="(user, index) in mentionSearchResults"
+                  :key="user.id"
+                  type="button"
+                  @click="selectMentionUser(user)"
+                  class="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 text-left"
+                  :class="{ 'bg-blue-100': index === mentionActiveIndex }"
+                >
+                  <img
+                    :src="getAvatarUrl(user.picture, user.first_name, user.last_name)"
+                    alt="user avatar"
+                    class="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-gray-900 text-sm">{{ user.username }}</div>
+                    <div class="text-xs text-gray-500">
+                      {{ user.first_name }} {{ user.last_name }}
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-2">
+              <!-- <button
                 type="button"
-                class="text-purple-600 hover:text-purple-700 flex items-center justify-center"
+                @click="handleGifClick"
+                class="text-purple-600 hover:text-purple-700 flex items-center justify-center transition-colors duration-150"
                 title="Add GIF"
               >
                 <span class="text-[10px] font-bold leading-none">GIF</span>
-              </button>
+              </button> -->
 
-              <button
+              <!-- <button
                 type="button"
-                class="text-yellow-500 hover:text-yellow-600 flex items-center justify-center"
+                @click="handleEmojiClick"
+                class="text-yellow-500 hover:text-yellow-600 flex items-center justify-center transition-colors duration-150"
                 title="Add emoji"
               >
                 <FontAwesomeIcon :icon="faFaceLaughBeam" class="w-4 h-4" />
-              </button>
+              </button> -->
             </div>
           </div>
 
@@ -481,6 +666,8 @@ async function handleToggleCommentLike() {
             <FontAwesomeIcon :icon="faXmark" class="w-4 h-4" />
           </button>
         </form>
+
+        <div v-if="showMentionList" class="h-56 mt-2"></div>
 
         <div
           v-if="replyError"

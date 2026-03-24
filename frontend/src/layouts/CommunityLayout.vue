@@ -14,10 +14,10 @@ import MobileBottomNav from '@/components/layout/MobileBottomNav.vue'
         <aside class="col-span-3 hidden lg:block sticky top-20">
           <CommunitySidebar />
         </aside>
-        <div class="col-span-12 lg:col-span-6 min-w-0">
+        <div class="col-span-12 lg:col-span-6 min-w-0 lg:pb-1">
           <RouterView :key="$route.fullPath" />
         </div>
-        <aside class="col-span-3 hidden lg:block sticky top-20">
+        <aside class="col-span-3 hidden lg:block sticky top-20 lg:pb-4">
           <RightSidebar />
         </aside>
       </div>
@@ -31,12 +31,12 @@ import MobileBottomNav from '@/components/layout/MobileBottomNav.vue'
 <style scoped>
 /* Reduced padding - thinner bottom nav */
 .pb-safe-mobile {
-  padding-bottom: 3rem; /* Reduced from 5rem */
+  padding-bottom: 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
   .pb-safe-mobile {
-    padding-bottom: calc(3rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(3rem + env(safe-area-inset-bottom, 0)); /* space for mobile bottom nav */
   }
 }
 </style>

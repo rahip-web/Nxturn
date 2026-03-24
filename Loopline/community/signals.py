@@ -2,7 +2,7 @@
 # --- ADDED REAL-TIME POST DELETION SIGNAL (Corrected Model Name) ---
 
 import re
-from django.db.models.signals import post_save, post_delete # <--- ADD post_delete
+from django.db.models.signals import post_save, post_delete 
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
@@ -58,6 +58,73 @@ def post_deleted_signal(sender, instance, **kwargs):
         )
     
     print(f"!!! REAL-TIME (Post Deleted): Sent post_deleted signal for ID {instance.id} to {len(recipient_user_ids)} users !!!")
+# =================================================================================
+
+
+# =================================================================================
+# === NEW REAL-TIME COMMENT DELETION SIGNAL ===
+# =================================================================================
+
+@receiver(post_delete, sender=Comment)
+def comment_deleted_signal(sender, instance, **kwargs):
+    """
+    Handles the deletion of a Comment instance.
+    
+    Broadcasts a 'comment_deleted' event to the author AND the post author 
+    AND all followers of the post author, ensuring real-time UI consistency.
+    """
+    print(f"!!! SIGNAL DEBUG: comment_deleted_signal triggered for comment ID {instance.id}")
+    
+    post = instance.content_object
+    post_author = post.author if hasattr(post, 'author') else None
+    comment_author = instance.author
+    
+    print(f"!!! SIGNAL DEBUG: post={post}, post_author={post_author}, comment_author={comment_author}")
+    
+    if not post_author:
+        print("!!! SIGNAL DEBUG: No post author found, returning")
+        return
+    
+    channel_layer = get_channel_layer()
+    
+    # --- Determine post_type from the content object ---
+    # Get the content type name from the ContentType model
+    post_type = instance.content_type.name.lower()
+    object_id = instance.object_id
+    
+    print(f"!!! SIGNAL DEBUG: content_type.name={instance.content_type.name}, post_type={post_type}, object_id={object_id}")
+    
+    message_to_send = {
+        'type': 'comment_deleted',
+        'payload': {
+            'comment_id': instance.id,
+            'post_type': post_type,
+            'object_id': object_id
+        }
+    }
+    
+    # --- Determine recipient users (post author + followers) ---
+    follower_ids = Follow.objects.filter(following=post_author).values_list('follower_id', flat=True)
+    recipient_user_ids = list(follower_ids) + [post_author.id]
+    
+    # Add the comment author to recipients (so they see their reply being deleted)
+    if comment_author.id not in recipient_user_ids:
+        recipient_user_ids.append(comment_author.id)
+    
+    print(f"!!! SIGNAL DEBUG: Broadcasting to user IDs: {recipient_user_ids}")
+    
+    # --- Broadcast to each user's personal group ---
+    for user_id in recipient_user_ids:
+        async_to_sync(channel_layer.group_send)(
+            f"user_{user_id}",
+            {
+                'type': 'send_live_post',  # Reusing the existing handler type
+                'message': message_to_send
+            }
+        )
+    
+    print(f"!!! REAL-TIME (Comment Deleted): Sent comment_deleted signal for ID {instance.id} to {len(recipient_user_ids)} users !!!")
+
 # =================================================================================
 
 

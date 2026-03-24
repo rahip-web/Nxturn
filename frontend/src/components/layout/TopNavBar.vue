@@ -356,6 +356,19 @@ watch(showSearchDropdown, (isOpen) => {
   else document.removeEventListener('click', closeSearchDropdownOnClickOutside)
 })
 
+watch(
+  () => route.query.q,
+  (query) => {
+    if (route.name === 'search') {
+      searchQuery.value = (query as string) || ''
+      if (!searchQuery.value.trim()) {
+        showSearchDropdown.value = false
+      }
+    }
+  },
+  { immediate: true },
+)
+
 watch(isMobileMenuOpen, (isOpen) => {
   if (isOpen) {
     document.addEventListener('click', closeMobileMenuOnClickOutside)
@@ -451,27 +464,25 @@ const currentUsername = computed(() => currentUser.value?.username || '')
     <nav class="mx-auto max-w-7xl h-full px-4 sm:px-5 lg:px-6">
       <div class="flex items-center justify-between h-full">
         <!-- Logo and Search Container -->
-        <div class="flex items-center flex-1">
-          <div class="flex-shrink-0 ml-2 sm:ml-3 lg:ml-4">
-            <RouterLink
-              to="/"
-              @click="handleLogoClick"
-              data-cy="navbar-logo-link"
-              class="text-2xl font-bold tracking-tight transition-all duration-200 rounded-lg px-3 py-2"
+        <div class="flex items-center flex-1 min-w-0 gap-4">
+          <!-- <div class="flex-shrink-0 ml-2 sm:ml-3 lg:ml-4"> -->
+          <RouterLink
+            to="/"
+            @click="handleLogoClick"
+            data-cy="navbar-logo-link"
+            class="text-3xl font-bold tracking-tight transition-all duration-200 rounded-lg px-2 py-1.5"
+          >
+            <span class="bg-gradient-to-r from-blue-600 to-purple-500 bg-clip-text text-transparent"
+              >NxtTurn</span
             >
-              <span
-                class="bg-gradient-to-r from-blue-600 to-purple-500 bg-clip-text text-transparent"
-                >NxtTurn</span
-              >
-            </RouterLink>
-          </div>
+          </RouterLink>
+          <!-- </div> -->
 
           <!-- Desktop Search - Hidden on mobile -->
-          <div
-            class="hidden md:flex flex-grow justify-start px-3 sm:px-4 ml-2 sm:ml-3 lg:ml-4"
-            ref="searchContainerRef"
-          >
-            <div class="relative w-full max-w-md">
+          <div class="hidden md:flex flex-1 min-w-0 justify-center" ref="searchContainerRef">
+            <div
+              class="relative w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-[520px] mx-auto"
+            >
               <form @submit.prevent="handleFullSearchSubmit" v-if="authStore.isAuthenticated">
                 <input
                   data-cy="global-search-input"
@@ -684,7 +695,7 @@ const currentUsername = computed(() => currentUser.value?.username || '')
         </div>
 
         <!-- Desktop Navigation - Hidden on mobile -->
-        <div class="hidden md:flex items-center gap-1 lg:gap-2 flex-shrink-0 mr-2 sm:mr-3 lg:mr-4">
+        <div class="hidden md:flex items-center gap-2 lg:gap-3 flex-shrink-0">
           <template v-if="authStore.isAuthenticated && currentUser">
             <!-- EXPLORE with dropdown -->
             <div class="relative group" ref="exploreMenuRef">

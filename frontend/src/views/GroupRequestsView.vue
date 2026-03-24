@@ -286,7 +286,7 @@ function formatTimestamp(dateString: string) {
       <!-- MAIN CONTENT CONTAINER -->
       <div
         v-else
-        class="bg-white rounded-xl sm:rounded-2xl shadow-md divide-y divide-gray-200 border border-gray-200 max-h-[60vh] sm:max-h-[70vh] overflow-y-auto"
+        class="bg-white rounded-xl sm:rounded-2xl shadow-md divide-y divide-gray-200 border border-gray-200"
       >
         <div
           v-for="request in joinRequests"
@@ -336,8 +336,7 @@ function formatTimestamp(dateString: string) {
               <!-- DROPDOWN - Mobile: full width, Desktop: fixed width -->
               <div
                 v-if="openDropdowns.get(request.id)"
-                class="absolute left-0 right-0 sm:left-auto sm:right-0 mt-2 w-full sm:w-60 rounded-xl sm:rounded-2xl shadow-xl bg-white ring-1 ring-black ring-opacity-5 border border-gray-200 z-50"
-                style="top: calc(100% + 4px)"
+                class="absolute left-0 right-0 sm:left-auto sm:right-0 top-full mt-2 w-full sm:w-60 rounded-xl sm:rounded-2xl shadow-xl bg-white ring-1 ring-black ring-opacity-5 border border-gray-200 z-50"
               >
                 <div class="py-1" role="menu" aria-orientation="vertical">
                   <a

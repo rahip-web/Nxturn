@@ -120,7 +120,7 @@ const getSafeAvatarUrl = (picture: string | null, firstName: string, lastName: s
     <h1 class="text-3xl font-bold text-gray-800 mb-6">Search</h1>
 
     <!-- Search Input -->
-    <div class="relative mb-6">
+    <!-- <div class="relative mb-6">
       <input
         type="text"
         :value="localQuery"
@@ -138,7 +138,7 @@ const getSafeAvatarUrl = (picture: string | null, firstName: string, lastName: s
           />
         </svg>
       </div>
-    </div>
+    </div> -->
 
     <!-- Tabs -->
     <div class="border-b border-gray-200 mb-6">

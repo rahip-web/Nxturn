@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { User, Briefcase, X, Save, Sparkles, Palette } from 'lucide-vue-next'
 import type { UserProfile } from '@/types'
 
@@ -19,6 +19,10 @@ const form = ref<IdentityFormData>({
   headline: '',
 })
 
+const isFormValid = computed(() => {
+  return Boolean(form.value.display_name?.trim()) && Boolean(form.value.headline?.trim())
+})
+
 watch(
   () => props.initialData,
   (newData) => {
@@ -33,6 +37,7 @@ watch(
 )
 
 function handleSubmit() {
+  if (!isFormValid.value) return
   emit('save', form.value)
 }
 </script>
@@ -118,7 +123,8 @@ function handleSubmit() {
 
       <button
         type="submit"
-        class="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white hover:from-purple-700 hover:via-pink-600 hover:to-orange-600 transition-all duration-200 flex-1 sm:flex-none order-1 sm:order-2 group relative overflow-hidden"
+        :disabled="!isFormValid"
+        class="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white transition-all duration-200 flex-1 sm:flex-none order-1 sm:order-2 group relative overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:from-purple-600 disabled:hover:via-pink-500 disabled:hover:to-orange-500"
       >
         <div
           class="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"

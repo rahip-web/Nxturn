@@ -51,7 +51,6 @@
       <nav class="space-y-2.5">
         <RouterLink
           to="/"
-          @click="handleHomeFeedClick"
           data-cy="sidebar-home-link"
           class="group flex items-center gap-3 px-3 py-1.5 rounded-xl font-medium transition-all duration-200 ease-out border border-transparent hover:border-orange-100 relative"
           :class="
@@ -77,7 +76,6 @@
 
         <RouterLink
           to="/groups"
-          @click="handleMyGroupsClick"
           data-cy="sidebar-groups-link"
           class="group flex items-center gap-3 px-3 py-1.5 rounded-xl font-medium transition-all duration-200 ease-out border border-transparent hover:border-blue-100 relative"
           :class="
@@ -103,7 +101,6 @@
 
         <RouterLink
           to="/saved-posts"
-          @click="handleSavedPostsClick"
           data-cy="sidebar-saved-posts-link"
           class="group flex items-center gap-3 px-3 py-1.5 rounded-xl font-medium transition-all duration-200 ease-out border border-transparent hover:border-green-100 relative"
           :class="
@@ -137,7 +134,6 @@ import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import { getAvatarUrl } from '@/utils/avatars'
 import { HomeIcon, UserGroupIcon, BookmarkIcon } from '@heroicons/vue/24/solid'
-import eventBus from '@/services/eventBus'
 
 // Font Awesome Icons
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -147,27 +143,6 @@ import { computed } from 'vue'
 const authStore = useAuthStore()
 const { currentUser } = storeToRefs(authStore)
 const route = useRoute()
-
-function handleHomeFeedClick(event: MouseEvent) {
-  if (route.path === '/') {
-    event.preventDefault()
-    eventBus.emit('scroll-to-top')
-  }
-}
-
-function handleMyGroupsClick(event: MouseEvent) {
-  if (route.name === 'group-list') {
-    event.preventDefault()
-    eventBus.emit('scroll-groups-to-top')
-  }
-}
-
-function handleSavedPostsClick(event: MouseEvent) {
-  if (route.name === 'saved-posts') {
-    event.preventDefault()
-    eventBus.emit('scroll-saved-posts-to-top')
-  }
-}
 
 // Computed properties for active states
 const isHomeRouteActive = computed(() => {

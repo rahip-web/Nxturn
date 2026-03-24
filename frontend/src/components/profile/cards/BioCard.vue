@@ -110,13 +110,13 @@ function openModal() {
             id="bio-textarea"
             v-model="bioData.bio"
             rows="4"
-            class="w-full p-3 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none bg-white"
+            class="w-full p-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none bg-white"
             placeholder="Tell us about your background, interests, and what you're passionate about..."
           ></textarea>
           <p class="text-xs text-gray-500 flex items-center gap-1">
             <svg
               class="h-3 w-3 text-gray-400"
-              fill="none"
+              fill="none" 
               viewBox="0 0 24 24"
               stroke="currentColor"
             >

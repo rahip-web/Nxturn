@@ -70,11 +70,11 @@ async function handleSave() {
 </script>
 
 <template>
-  <div class="space-y-6 animate-fade-in">
+  <div class="space-y-6 animate-fade-in bg-white text-gray-900">
     <!-- Header -->
-    <div class="flex items-center justify-between border-b pb-4 dark:border-gray-700">
+    <div class="flex items-center justify-between border-b pb-4">
       <div>
-        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Contact & Privacy</h3>
+        <h3 class="text-lg font-bold text-gray-900">Contact & Privacy</h3>
         <p class="text-sm text-gray-500">Manage your contact details and visibility settings.</p>
       </div>
 
@@ -87,7 +87,7 @@ async function handleSave() {
         :class="
           isEditing
             ? 'bg-red-50 text-red-600 hover:bg-red-100'
-            : 'bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400'
+            : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
         "
       >
         <component :is="isEditing ? X : Edit2" class="w-4 h-4" />
@@ -98,16 +98,14 @@ async function handleSave() {
     <div v-if="profile" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
       <!-- Email (Always Read Only) -->
       <div class="space-y-2">
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300"
-          >Email Address</label
-        >
+        <label class="block text-sm font-semibold text-gray-700">Email Address</label>
         <div class="relative">
           <Mail class="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
           <input
             type="email"
             :value="profile.email || 'Private'"
             disabled
-            class="block w-full pl-10 bg-gray-50 border border-gray-200 text-gray-500 rounded-xl p-3 cursor-not-allowed dark:bg-gray-800/50 dark:border-gray-700"
+            class="block w-full pl-10 bg-gray-50 border border-gray-200 text-gray-500 rounded-xl p-3 cursor-not-allowed"
           />
         </div>
         <p v-if="isEditing" class="text-[10px] text-amber-600 flex items-center mt-1">
@@ -118,9 +116,7 @@ async function handleSave() {
 
       <!-- Phone Number -->
       <div class="space-y-2">
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300"
-          >Phone Number</label
-        >
+        <label class="block text-sm font-semibold text-gray-700">Phone Number</label>
         <div class="relative">
           <Phone class="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
           <input
@@ -130,32 +126,32 @@ async function handleSave() {
             class="block w-full pl-10 rounded-xl border p-3 transition-all outline-none"
             :class="
               isEditing
-                ? 'bg-white border-blue-400 focus:ring-2 focus:ring-blue-100 dark:bg-gray-900 dark:border-blue-900'
-                : 'bg-gray-50 border-gray-200 text-gray-500 dark:bg-gray-800/50 dark:border-gray-700'
+                ? 'bg-white border-blue-400 focus:ring-2 focus:ring-blue-100'
+                : 'bg-gray-50 border-gray-200 text-gray-500'
             "
           />
         </div>
       </div>
 
       <!-- Visibility Controls - ONLY VISIBLE TO THE OWNER -->
-      <div v-if="isOwnProfile" class="md:col-span-2 space-y-4 mt-4">
-        <div class="flex items-center space-x-2 border-t pt-4 dark:border-gray-800">
+      <div v-if="isOwnProfile" class="md:col-span-2 space-y-3 mt-2">
+        <div class="flex items-center space-x-2 border-t pt-3">
           <ShieldCheck class="w-4 h-4 text-blue-500" />
           <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest">
             Privacy Settings
           </h4>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <!-- Email Visibility -->
-          <div class="p-4 bg-gray-50 rounded-2xl dark:bg-gray-800/50 border dark:border-gray-700">
+          <div class="p-4 bg-gray-50 rounded-2xl border border-gray-200">
             <label class="block text-xs font-medium text-gray-500 mb-2"
               >Who can see your email?</label
             >
             <select
               v-model="formData.email_visibility"
               :disabled="!isEditing"
-              class="w-full bg-white border border-gray-200 rounded-lg p-2.5 dark:bg-gray-900 dark:border-gray-700 dark:text-white outline-none focus:border-blue-500 cursor-pointer disabled:cursor-not-allowed"
+              class="w-full bg-white border border-gray-200 rounded-lg p-2.5 outline-none focus:border-blue-500 cursor-pointer disabled:cursor-not-allowed"
             >
               <option value="public">Everyone</option>
               <option value="followers">My Followers</option>
@@ -165,14 +161,14 @@ async function handleSave() {
           </div>
 
           <!-- Phone Visibility -->
-          <div class="p-4 bg-gray-50 rounded-2xl dark:bg-gray-800/50 border dark:border-gray-700">
+          <div class="p-4 bg-gray-50 rounded-2xl border border-gray-200">
             <label class="block text-xs font-medium text-gray-500 mb-2"
               >Who can see your phone?</label
             >
             <select
               v-model="formData.phone_visibility"
               :disabled="!isEditing"
-              class="w-full bg-white border border-gray-200 rounded-lg p-2.5 dark:bg-gray-900 dark:border-gray-700 dark:text-white outline-none focus:border-blue-500 cursor-pointer disabled:cursor-not-allowed"
+              class="w-full bg-white border border-gray-200 rounded-lg p-2.5 outline-none focus:border-blue-500 cursor-pointer disabled:cursor-not-allowed"
             >
               <option value="public">Everyone</option>
               <option value="followers">My Followers</option>
@@ -185,7 +181,7 @@ async function handleSave() {
     </div>
 
     <!-- Save Button (Owner Only) -->
-    <div v-if="isEditing" class="flex justify-end pt-6">
+    <div v-if="isEditing" class="flex justify-end pt-2">
       <button
         @click="handleSave"
         :disabled="isSaving"

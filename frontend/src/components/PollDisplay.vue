@@ -37,7 +37,9 @@ async function handleVote(optionId: number) {
 
 <template>
   <div class="p-4">
-    <p class="font-bold text-gray-800 mb-4 break-all">{{ poll.question }}</p>
+    <p class="font-bold text-gray-800 mb-4 break-words [overflow-wrap:anywhere]">
+      {{ poll.question }}
+    </p>
 
     <div class="space-y-3">
       <div v-for="(option, index) in poll.options" :key="option.id">

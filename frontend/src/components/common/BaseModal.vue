@@ -32,8 +32,10 @@ const filteredAttributes = computed(() => {
 // Compute container classes - Merging your critical Flex/Height logic with his width logic
 const containerClass = computed(() => {
   // We use YOUR max-h-[90vh] because 70vh is too short for our forms
-  const base = 'relative flex flex-col w-full bg-white rounded-lg shadow-xl max-h-[90vh]'
-  const maxWidthClass = props.maxWidth || 'max-w-lg'
+  const base =
+    'relative flex flex-col w-full min-h-0 bg-white shadow-xl overflow-hidden max-h-[calc(100vh-2rem)] sm:max-h-[90vh] rounded-none sm:rounded-lg'
+  const maxWidthClass =
+    props.maxWidth || 'max-w-none sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl'
 
   return `${base} ${maxWidthClass}`
 })
@@ -73,14 +75,14 @@ function closeModal() {
       <!-- Click container for "click outside" -->
       <div
         v-if="show"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
         @click="closeModal"
       >
         <!-- Modal panel - Using the merged containerClass and filteredAttributes -->
         <div :class="containerClass" v-bind="filteredAttributes" @click.stop>
           <!-- Modal Header (flex-shrink-0 prevents it from disappearing - Your Fix) -->
-          <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
-            <h3 class="text-lg font-semibold text-gray-800">{{ title }}</h3>
+          <div class="flex items-center justify-between p-4 sm:p-5 border-b flex-shrink-0">
+            <h3 class="text-base sm:text-lg font-semibold text-gray-800">{{ title }}</h3>
             <button
               @click="closeModal"
               class="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -91,12 +93,15 @@ function closeModal() {
           </div>
 
           <!-- Modal Body (overflow-y-auto enables scrolling - Your Fix) -->
-          <div class="p-6 overflow-y-auto flex-grow">
+          <div class="p-4 sm:p-6 overflow-y-auto flex-grow min-h-0">
             <slot></slot>
           </div>
 
           <!-- Modal Footer (flex-shrink-0 prevents it from disappearing - Your Fix) -->
-          <div v-if="$slots.footer" class="p-4 bg-gray-50 border-t rounded-b-lg flex-shrink-0">
+          <div
+            v-if="$slots.footer"
+            class="p-4 sm:p-5 bg-gray-50 border-t rounded-b-none sm:rounded-b-lg flex-shrink-0"
+          >
             <slot name="footer"></slot>
           </div>
         </div>

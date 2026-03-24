@@ -113,7 +113,7 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div v-if="mainFeedPosts.length > 0" class="space-y-4">
+      <div v-if="mainFeedPosts.length > 0" class="space-y-3">
         <PostItem v-for="post in mainFeedPosts" :key="post.id" :post="post" />
       </div>
 

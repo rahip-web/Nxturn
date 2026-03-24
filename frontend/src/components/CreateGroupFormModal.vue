@@ -48,6 +48,9 @@ const groupData = ref({
 const localError = ref('')
 const isCreatingGroup = computed(() => groupStore.isCreatingGroup)
 const createGroupError = computed(() => groupStore.createGroupError)
+const isFormValid = computed(() => {
+  return !!groupData.value.name.trim() && !!groupData.value.description.trim()
+})
 
 const errorMessages = computed(() => {
   const errors: { name: string; description: string; privacy_level: string } = {
@@ -174,7 +177,7 @@ async function handleSubmit() {
 
             <!-- Form Content - Scrollable inside modal -->
             <div class="px-5 py-4 sm:px-6 sm:py-5 flex-1 overflow-y-auto custom-scrollbar">
-              <form @submit.prevent="handleSubmit" class="space-y-5">
+              <form @submit.prevent="handleSubmit" class="space-y-5" novalidate>
                 <!-- Group Name -->
                 <div class="space-y-2">
                   <div class="flex items-center gap-2 mb-1">
@@ -190,7 +193,6 @@ async function handleSubmit() {
                     type="text"
                     id="group-name"
                     v-model="groupData.name"
-                    required
                     class="w-full px-3 py-2.5 text-sm rounded-lg border border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all duration-150"
                     placeholder="e.g., Python Developers Community"
                     :disabled="isCreatingGroup"
@@ -409,7 +411,7 @@ async function handleSubmit() {
                   data-cy="create-group-submit-button"
                   type="submit"
                   @click="handleSubmit"
-                  :disabled="isCreatingGroup"
+                  :disabled="isCreatingGroup || !isFormValid"
                   class="flex-1 px-4 py-2.5 text-sm rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all duration-150 shadow hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span class="flex items-center justify-center gap-2">

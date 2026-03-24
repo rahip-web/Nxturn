@@ -278,10 +278,8 @@ function nameWithoutLeadingEmoji(name = ''): string {
                   {{ leadingEmoji(group.name) }}
                 </span>
 
-                <!-- Gradient only for remaining text -->
-                <span
-                  class="bg-clip-text text-transparent bg-gradient-to-r from-gray-800 to-gray-700"
-                >
+                <!-- Keep remaining text black to match emoji color -->
+                <span class="text-gray-900">
                   {{ nameWithoutLeadingEmoji(group.name) }}
                 </span>
               </h2>

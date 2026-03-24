@@ -227,7 +227,7 @@ onUnmounted(() => {
           ]"
         >
           <!-- Reduced gap between ProfileCard and tabs -->
-          <div class="space-y-4">
+          <div class="space-y-4 mb-4">
             <!-- Pass postsCount prop to ProfileCard -->
             <ProfileCard
               :profile="currentProfile"

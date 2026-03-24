@@ -128,6 +128,20 @@ class NotificationService {
           useGroupStore().handlePostDeletedSignal(postId)
           break
         }
+        case 'comment_deleted': {
+          const commentId = payload.comment_id
+          const postType = payload.post_type
+          const objectId = payload.object_id
+          console.log(`!!! WEBSOCKET DEBUG: Received comment_deleted event: commentId=${commentId}, postType=${postType}, objectId=${objectId}`)
+          if (!commentId || !postType || !objectId) {
+            console.warn('Service: Received comment_deleted event but missing required fields', payload)
+            return
+          }
+          console.log(`Service: Dispatching delete for comment ID ${commentId} to comment store.`)
+          const { useCommentStore } = await import('@/stores/comment')
+          useCommentStore().handleCommentDeletedSignal(commentId, postType, objectId)
+          break
+        }
         default:
           console.warn(`Service: Unhandled event type: '${eventType}'`)
       }

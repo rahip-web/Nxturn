@@ -111,11 +111,20 @@ export const useCommentStore = defineStore('comment', () => {
     try {
       await axiosInstance.delete(`/comments/${commentId}/`);
 
+      // Remove the deleted comment (and any direct replies) from the store
       if (commentsByPost.value[postKey]) {
-        commentsByPost.value[postKey] = commentsByPost.value[postKey].filter(c => c.id !== commentId);
+        const beforeList = commentsByPost.value[postKey];
+        const repliesToParent = beforeList.filter(c => c.parent === commentId);
+        commentsByPost.value[postKey] = beforeList.filter(
+          c => c.id !== commentId && c.parent !== commentId
+        );
+
+        // decrement the post-level comment count by number removed
+        const totalRemoved = 1 + repliesToParent.length;
+        postsStore.decrementCommentCount(parentPostId, totalRemoved);
+      } else {
+        postsStore.decrementCommentCount(parentPostId);
       }
-      
-      postsStore.decrementCommentCount(parentPostId);
       
       return true;
 
@@ -124,6 +133,24 @@ export const useCommentStore = defineStore('comment', () => {
       throw err; 
     }
   }
+
+  // --- NEW: Handle WebSocket signal for comment deletion ---
+  function handleCommentDeletedSignal(commentId: number, postType: string, objectId: number) {
+    const postKey = `${postType}_${objectId}`;
+    console.log(`!!! COMMENT STORE DEBUG: handleCommentDeletedSignal called with commentId=${commentId}, postType=${postType}, objectId=${objectId}, postKey=${postKey}`);
+    
+    const existing = commentsByPost.value[postKey] || [];
+    const removed = existing.find(c => c.id === commentId);
+
+    commentsByPost.value[postKey] = existing.filter(c => c.id !== commentId);
+
+    if (removed) {
+      // update post-level comment count so top counter stays accurate
+      postsStore.decrementCommentCount(objectId);
+      console.log(`!!! COMMENT STORE DEBUG: Decremented post ${objectId} comment count due to deletion of ${commentId}`);
+    }
+  }
+  // --- END OF NEW ---
 
   async function editComment(commentId: number, newContent: string, postType: string, objectId: number) {
     const postKey = `${postType}_${objectId}`;
@@ -188,5 +215,6 @@ export const useCommentStore = defineStore('comment', () => {
     deleteComment,
     editComment,
     toggleLikeOnComment,
+    handleCommentDeletedSignal,
   };
 });

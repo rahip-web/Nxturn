@@ -37,6 +37,35 @@ const activeTab = ref<'avatars' | 'upload'>('avatars')
 
 // Profile picture preview for other users
 const isProfilePicturePreviewModalOpen = ref(false)
+const displayNameText = computed(() => {
+  return (
+    props.profile.display_name ||
+    `${props.profile.user.first_name} ${props.profile.user.last_name}`
+  )
+})
+
+function splitEmojiText(text = ''): Array<{ text: string; isEmoji: boolean }> {
+  const parts: Array<{ text: string; isEmoji: boolean }> = []
+  const emojiRegex =
+    /(\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\uFE0E)?)*)/gu
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = emojiRegex.exec(text)) !== null) {
+    const index = match.index
+    if (index > lastIndex) {
+      parts.push({ text: text.slice(lastIndex, index), isEmoji: false })
+    }
+    parts.push({ text: match[0], isEmoji: true })
+    lastIndex = index + match[0].length
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ text: text.slice(lastIndex), isEmoji: false })
+  }
+
+  return parts
+}
 
 type IdentityFormData = {
   display_name: string | null
@@ -423,10 +452,18 @@ onUnmounted(() => {
           >
             <div class="mb-4 px-2">
               <!-- Display Name -->
-              <h1
-                class="text-xl sm:text-2xl font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent break-words"
-              >
-                {{ profile.display_name || `${profile.user.first_name} ${profile.user.last_name}` }}
+              <h1 class="text-xl sm:text-2xl font-bold text-gray-800 break-words">
+                <span
+                  v-for="(part, idx) in splitEmojiText(displayNameText)"
+                  :key="`${idx}-${part.text}`"
+                  :class="
+                    part.isEmoji
+                      ? 'text-gray-800'
+                      : 'bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600'
+                  "
+                >
+                  {{ part.text }}
+                </span>
               </h1>
               <p class="text-base sm:text-lg text-gray-500 mt-1 break-words">
                 @{{ profile.user.username }}

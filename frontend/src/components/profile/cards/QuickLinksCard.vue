@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { UserProfile, SocialLink, ProfileUpdatePayload } from '@/types'
 import { useProfileStore } from '@/stores/profile'
 import { Save, Edit3, Link2, MoreVertical, Trash2 } from 'lucide-vue-next'
@@ -23,6 +23,9 @@ const isModalOpen = ref(false)
 const isLoading = ref(false)
 
 const editableLinks = ref<EditableLink[]>([])
+const hasValidLinks = computed(() =>
+  editableLinks.value.some((link) => link.url && link.url.trim() !== ''),
+)
 
 const linkOptions = [
   { value: 'linkedin', text: 'LinkedIn' },
@@ -69,16 +72,16 @@ async function handleSaveChanges() {
 <template>
   <div
     data-cy="quick-links-card"
-    class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 relative hover:shadow-xl transition-all duration-300"
+    class="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-5 lg:p-6 relative hover:shadow-xl transition-all duration-300"
   >
     <!-- Header -->
-    <div class="flex items-center mb-6 pb-4 border-b border-gray-100">
+    <div class="flex items-center mb-5 sm:mb-6 pb-4 border-b border-gray-100">
       <div
         class="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg mr-3"
       >
         <Link2 class="h-6 w-6 text-white" />
       </div>
-      <h3 class="text-xl font-bold text-gray-800">Quick Links</h3>
+      <h3 class="text-lg sm:text-xl font-bold text-gray-800">Quick Links</h3>
 
       <!-- Three Dots Button - Opens Modal Directly -->
       <button
@@ -93,14 +96,14 @@ async function handleSaveChanges() {
     </div>
 
     <!-- Links Display - Show full URL with https:// -->
-    <div v-if="profile.social_links && profile.social_links.length > 0" class="grid gap-3">
+    <div v-if="profile.social_links && profile.social_links.length > 0" class="grid gap-2 sm:gap-3">
       <a
         v-for="link in profile.social_links"
         :key="link.id"
         :href="link.url"
         target="_blank"
         rel="noopener noreferrer"
-        class="group flex items-center p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 bg-white"
+        class="group flex items-center p-3 sm:p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 bg-white"
       >
         <!-- Smaller Colorful Icon Background -->
         <div
@@ -117,10 +120,12 @@ async function handleSaveChanges() {
 
         <!-- Link Details with full URL -->
         <div class="ml-3 flex-1 min-w-0 overflow-hidden">
-          <p class="text-sm font-semibold text-gray-900 truncate">
+          <p class="text-xs sm:text-sm font-semibold text-gray-900 truncate">
             {{ linkOptions.find((o) => o.value === link.link_type)?.text || 'Link' }}
           </p>
-          <p class="text-xs text-gray-500 break-all overflow-hidden line-clamp-2 mt-0.5">
+          <p
+            class="text-[11px] sm:text-xs text-gray-500 break-all overflow-hidden line-clamp-2 mt-0.5"
+          >
             {{ link.url }}
           </p>
         </div>
@@ -142,7 +147,7 @@ async function handleSaveChanges() {
     </div>
 
     <!-- Empty State -->
-    <div v-else class="text-center py-8">
+    <div v-else class="text-center py-6 sm:py-8">
       <div
         class="flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mx-auto mb-4"
       >
@@ -152,7 +157,7 @@ async function handleSaveChanges() {
       <button
         v-if="isOwnProfile"
         @click="openModal"
-        class="text-orange-500 hover:text-orange-600 font-medium text-sm flex items-center gap-1 mx-auto"
+        class="text-orange-500 hover:text-orange-600 active:text-orange-700 font-medium text-sm flex items-center gap-1 mx-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 transition-colors duration-200 touch-manipulation"
       >
         + Add your first link
       </button>
@@ -163,12 +168,12 @@ async function handleSaveChanges() {
       :show="isModalOpen"
       title="Edit Quick Links"
       @close="isModalOpen = false"
-      class="max-w-md"
+      class="max-w-sm sm:max-w-md"
     >
-      <div class="space-y-3 max-h-64 overflow-y-auto pr-1">
+      <div class="space-y-3 max-h-[60vh] sm:max-h-[65vh] md:max-h-[70vh] overflow-y-auto">
         <!-- Compact Header -->
         <div
-          class="flex items-center gap-3 p-3 bg-gradient-to-r from-orange-50 to-pink-50 rounded-lg border border-orange-100"
+          class="flex items-center gap-3 p-3 sm:p-4 bg-gradient-to-r from-orange-50 to-pink-50 rounded-lg border border-orange-100"
         >
           <div
             class="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg flex-shrink-0"
@@ -176,7 +181,9 @@ async function handleSaveChanges() {
             <Link2 class="h-5 w-5 text-white" />
           </div>
           <div class="min-w-0 flex-1">
-            <h3 class="text-sm font-semibold text-gray-900 truncate">Manage Your Links</h3>
+            <h3 class="text-sm sm:text-base font-semibold text-gray-900 truncate">
+              Manage Your Links
+            </h3>
             <p class="text-xs text-gray-600 truncate">Add and organize your social profiles</p>
           </div>
         </div>
@@ -185,7 +192,7 @@ async function handleSaveChanges() {
         <div
           v-for="(link, index) in editableLinks"
           :key="index"
-          class="group p-3 border border-gray-200 rounded-lg bg-white hover:border-orange-300 transition-all duration-200 relative"
+          class="group p-3 sm:p-4 border border-gray-200 rounded-lg bg-white hover:border-orange-300 transition-all duration-200 relative"
         >
           <button
             data-cy="remove-link-button"
@@ -212,7 +219,7 @@ async function handleSaveChanges() {
                 <select
                   :id="`link-type-${index}`"
                   v-model="link.link_type"
-                  class="w-full p-1.5 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white outline-none"
+                  class="w-full p-2 text-xs sm:text-sm border border-gray-200 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white outline-none"
                 >
                   <option v-for="option in linkOptions" :key="option.value" :value="option.value">
                     {{ option.text }}
@@ -245,7 +252,7 @@ async function handleSaveChanges() {
                 v-model="link.url"
                 type="url"
                 placeholder="https://example.com/your-profile"
-                class="w-full p-1.5 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 outline-none"
+                class="w-full p-2 text-xs sm:text-sm border border-gray-200 rounded focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 outline-none"
               />
             </div>
           </div>
@@ -255,25 +262,26 @@ async function handleSaveChanges() {
         <BaseButton
           @click="addLink"
           variant="secondary"
-          class="w-full py-2.5 border border-dashed border-gray-200 hover:border-orange-300 hover:bg-orange-50 text-gray-600 hover:text-orange-600 transition-all duration-200 flex items-center justify-center group text-xs focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
+          class="w-full max-w-full box-border py-2.5 sm:py-3 !border-2 !border-dashed !border-gray-200 rounded-lg !bg-white text-gray-600 hover:!border-orange-300 hover:!bg-orange-50 hover:text-orange-600 active:!border-orange-400 active:!bg-orange-100 active:text-orange-700 transition-all duration-200 flex items-center justify-center text-xs sm:text-sm !shadow-none hover:!shadow-none outline-none focus:!ring-0 focus:!ring-offset-0 focus-visible:!ring-0 focus-visible:!ring-offset-0 overflow-hidden touch-manipulation"
         >
           + Add another link
         </BaseButton>
       </div>
 
       <template #footer>
-        <div class="flex flex-col xs:flex-row justify-end gap-2 pt-3 border-t border-gray-100">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 pt-3 border-t border-gray-100">
           <BaseButton
             @click="isModalOpen = false"
             variant="secondary"
-            class="px-3 py-1.5 text-xs order-2 xs:order-1 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
+            class="px-3 py-2 text-xs sm:text-sm order-2 sm:order-1 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
           >
             Cancel
           </BaseButton>
           <BaseButton
             @click="handleSaveChanges"
             :is-loading="isLoading"
-            class="px-3 py-1.5 text-xs bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white shadow hover:shadow-md transition-all duration-200 flex items-center gap-1 order-1 xs:order-2 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none"
+            :disabled="!hasValidLinks || isLoading"
+            class="px-3 py-2 text-xs sm:text-sm bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white shadow hover:shadow-md transition-all duration-200 flex items-center gap-1 order-1 sm:order-2 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save class="h-3 w-3" v-if="!isLoading" />
             {{ isLoading ? 'Saving...' : 'Save Changes' }}
@@ -284,19 +292,4 @@ async function handleSaveChanges() {
   </div>
 </template>
 
-<style scoped>
-/* Custom breakpoint for extra small devices */
-@media (max-width: 475px) {
-  .xs\:flex-row {
-    flex-direction: row !important;
-  }
-
-  .xs\:order-1 {
-    order: 1 !important;
-  }
-
-  .xs\:order-2 {
-    order: 2 !important;
-  }
-}
-</style>
+<style scoped></style>

@@ -48,10 +48,10 @@ export const usePostsStore = defineStore('posts', () => {
     }
   }
 
-  function decrementCommentCount(postId: number) {
+  function decrementCommentCount(postId: number, amount: number = 1) {
     const post = posts.value[postId]
-    if (post && post.comment_count) {
-      post.comment_count = Math.max(0, post.comment_count - 1)
+    if (post && typeof post.comment_count === 'number') {
+      post.comment_count = Math.max(0, post.comment_count - amount)
     }
   }
 

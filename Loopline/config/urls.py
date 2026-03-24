@@ -10,12 +10,20 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 # Import all necessary views from the community app
-from community.views import ForcefulLogoutView, CustomConfirmEmailView, password_reset_redirect_view
+from community.views import (
+    ForcefulLogoutView,
+    CustomConfirmEmailView,
+    password_reset_redirect_view,
+    CustomPasswordResetView,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     
     path('api/auth/logout/', ForcefulLogoutView.as_view(), name='forceful_rest_logout'),
+
+    # Override default password reset endpoint to require verified email first
+    path('api/auth/password/reset/', CustomPasswordResetView.as_view(), name='rest_password_reset'),
 
     re_path(
         r'^api/auth/registration/account-confirm-email/(?P<key>[-:\w]+)/$',

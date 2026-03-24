@@ -2,6 +2,7 @@
 // --- Imports ---
 import { getAvatarUrl, buildMediaUrl } from '@/utils/avatars'
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { debounce } from 'lodash-es'
 import { useFeedStore } from '@/stores/feed'
 import { usePostsStore } from '@/stores/posts'
 import type { Post, PostMedia, PollOption } from '@/types'
@@ -148,6 +149,14 @@ const { currentUser, isAuthenticated } = storeToRefs(authStore)
 const { isCreatingComment, createCommentError } = storeToRefs(commentStore)
 const showComments = ref(false)
 const newCommentContent = ref('')
+const newCommentInputRef = ref<HTMLTextAreaElement | null>(null)
+const isCommentMultiline = ref(false)
+const showMentionDropdown = ref(false)
+const mentionSearchResults = ref<
+  Array<{ id: number; username: string; first_name: string; last_name: string; picture: string }>
+>([])
+const mentionIsLoading = ref(false)
+const mentionActiveIndex = ref(-1)
 const localDeleteError = ref<string | null>(null)
 const isLiking = ref(false)
 const activeMediaIndex = ref(0)
@@ -1278,8 +1287,12 @@ function setHoveredModalReaction(reactionName: string | null) {
   hoveredModalReaction.value = reactionName
 }
 
-function toggleOptionsMenu() {
+function toggleOptionsMenu(event?: MouseEvent) {
   showOptionsMenu.value = !showOptionsMenu.value
+  if (!showOptionsMenu.value) {
+    const target = event?.currentTarget as HTMLElement | null
+    target?.blur()
+  }
 }
 function handleEditClick() {
   toggleEditMode()
@@ -1313,6 +1326,45 @@ watch(showOptionsMenu, (isOpen) => {
   if (isOpen) document.addEventListener('click', closeOnClickOutside, true)
   else document.removeEventListener('click', closeOnClickOutside, true)
 })
+
+// Watch for mention changes
+watch(newCommentContent, (newVal) => {
+  if (!newVal) {
+    resetMentionState()
+    return
+  }
+  const inputElement = newCommentInputRef.value
+  if (inputElement) {
+    const cursorPos = inputElement.selectionStart || 0
+    checkForMentionInComment(newVal, cursorPos)
+  }
+})
+
+// Close mention dropdown when clicking outside
+const closeMentionDropdownOnClickOutside = (event: MouseEvent) => {
+  const mentionDropdown = document.querySelector('[data-mention-dropdown]')
+  const mentionInput = document.querySelector('textarea[placeholder="Add a comment..."]')
+  if (
+    mentionDropdown &&
+    mentionInput &&
+    !mentionDropdown.contains(event.target as Node) &&
+    !mentionInput.contains(event.target as Node)
+  ) {
+    showMentionDropdown.value = false
+  }
+}
+
+watch(showMentionDropdown, (isOpen) => {
+  if (isOpen) {
+    document.addEventListener('click', closeMentionDropdownOnClickOutside, true)
+  } else {
+    mentionSearchResults.value = []
+    mentionActiveIndex.value = -1
+    mentionIsLoading.value = false
+    document.removeEventListener('click', closeMentionDropdownOnClickOutside, true)
+  }
+})
+
 const handleNavigation = () => {
   if (isEditing.value) isEditing.value = false
 }
@@ -1322,6 +1374,9 @@ onMounted(() => eventBus.on('navigation-started', handleNavigation))
 async function toggleCommentDisplay() {
   const wasShowingComments = showComments.value
   showComments.value = !showComments.value
+  if (!showComments.value) {
+    resetMentionState()
+  }
 
   if (showComments.value) {
     if (commentsForThisPost.value.length === 0 && !commentError.value) {
@@ -1590,6 +1645,110 @@ function linkifyContent(text: string | null | undefined): string {
   return linkedText
 }
 
+// Mention autocomplete functions
+const searchMentionUsers = debounce(async (query: string) => {
+  if (query.length < 1) {
+    mentionSearchResults.value = []
+    return
+  }
+  mentionIsLoading.value = true
+  console.log('Searching for users with query:', query)
+  try {
+    const response = await axiosInstance.get('/search/users/', {
+      params: { q: query, page_size: 5 },
+    })
+    console.log('Search results:', response.data.results)
+    mentionSearchResults.value = response.data.results
+  } catch (error) {
+    console.error('Failed to search for users:', error)
+    mentionSearchResults.value = []
+  } finally {
+    mentionIsLoading.value = false
+  }
+}, 300)
+
+function autoResizeNewComment() {
+  const el = newCommentInputRef.value
+  if (!el) return
+  el.style.height = 'auto'
+  const maxHeight = 96
+  el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px'
+  isCommentMultiline.value = el.scrollHeight > 44
+}
+
+function handleNewCommentInput(event: Event) {
+  const target = event.target as HTMLTextAreaElement
+  newCommentContent.value = target.value
+  autoResizeNewComment()
+  checkForMentionInComment(target.value, target.selectionStart || 0)
+}
+
+function resetMentionState() {
+  showMentionDropdown.value = false
+  mentionSearchResults.value = []
+  mentionActiveIndex.value = -1
+  mentionIsLoading.value = false
+  searchMentionUsers.cancel?.()
+}
+
+function checkForMentionInComment(text: string, cursorPosition: number) {
+  const textBeforeCursor = text.slice(0, cursorPosition)
+  const mentionMatch = textBeforeCursor.match(/@([\w.-]*)$/)
+
+  if (mentionMatch) {
+    showMentionDropdown.value = true
+    mentionActiveIndex.value = -1
+    searchMentionUsers(mentionMatch[1])
+  } else {
+    showMentionDropdown.value = false
+  }
+}
+
+function selectMentionUser(user: any) {
+  const inputElement = newCommentInputRef.value
+  if (!inputElement) return
+
+  const currentText = newCommentContent.value
+  const cursorPosition = inputElement.selectionStart || 0
+  const textBeforeCursor = currentText.slice(0, cursorPosition)
+  const mentionStartIndex = textBeforeCursor.lastIndexOf('@')
+
+  if (mentionStartIndex !== -1) {
+    const textBeforeMention = currentText.slice(0, mentionStartIndex)
+    const textAfterCursor = currentText.slice(cursorPosition)
+    const newText = `${textBeforeMention}@${user.username} ${textAfterCursor}`
+    newCommentContent.value = newText
+    const newCursorPosition = (textBeforeMention + `@${user.username} `).length
+
+    nextTick(() => {
+      inputElement.focus()
+      inputElement.setSelectionRange(newCursorPosition, newCursorPosition)
+    })
+  }
+
+  showMentionDropdown.value = false
+}
+
+function handleMentionKeydown(event: KeyboardEvent) {
+  if (!showMentionDropdown.value || mentionSearchResults.value.length === 0) return
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    mentionActiveIndex.value = (mentionActiveIndex.value + 1) % mentionSearchResults.value.length
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    mentionActiveIndex.value =
+      (mentionActiveIndex.value - 1 + mentionSearchResults.value.length) %
+      mentionSearchResults.value.length
+  } else if (event.key === 'Enter' && mentionActiveIndex.value !== -1) {
+    event.preventDefault()
+    selectMentionUser(mentionSearchResults.value[mentionActiveIndex.value])
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    showMentionDropdown.value = false
+  }
+}
+
 async function handleCommentSubmit() {
   if (!newCommentContent.value.trim()) return
   await commentStore.createComment(
@@ -1599,6 +1758,8 @@ async function handleCommentSubmit() {
     props.post.id,
   )
   newCommentContent.value = ''
+  resetMentionState()
+  autoResizeNewComment()
 }
 
 // GIF functionality placeholder
@@ -1705,9 +1866,10 @@ function handleEmojiClick() {
           </div>
         </div>
         <div v-if="isAuthenticated" class="relative" ref="optionsMenuRef">
-          <button
+            <button
             @click.stop="toggleOptionsMenu"
-            class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 transition-colors duration-200"
+            :class="showOptionsMenu ? 'ring-2 ring-offset-2 ring-blue-500' : ''"
             data-cy="post-options-button"
           >
             <FontAwesomeIcon :icon="faEllipsisVertical" class="w-3 h-3 md:w-4 md:h-4" />
@@ -2250,11 +2412,11 @@ function handleEmojiClick() {
             </div>
           </div>
 
-          <!-- Simple Comment Input (FB / Instagram style) -->
+          <!-- Simple Comment Input  -->
           <form
             v-if="isAuthenticated"
             @submit.prevent="handleCommentSubmit"
-            class="comment-input-form flex items-center gap-2 px-3 py-2 bg-white border-t border-gray-100"
+            class="comment-input-form flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-white border-t border-gray-100"
             data-cy="comment-input"
           >
             <!-- User Avatar -->
@@ -2267,20 +2429,28 @@ function handleEmojiClick() {
                 )
               "
               alt="your avatar"
-              class="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-gray-200"
+              class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0 bg-gray-200"
             />
 
             <!-- Input + inline actions -->
-            <div class="relative flex-1">
-              <input
-                v-model="newCommentContent"
-                type="text"
+            <div class="relative flex-1 overflow-visible">
+              <textarea
+                ref="newCommentInputRef"
+                :value="newCommentContent"
+                rows="1"
                 placeholder="Add a comment..."
-                class="w-full text-sm px-4 py-2 pr-20 rounded-full bg-gray-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-              />
+                @keydown="handleMentionKeydown"
+                @input="handleNewCommentInput"
+                :class="[
+                  'w-full text-sm sm:text-base px-4 py-2 sm:py-2.5 pr-12 sm:pr-20 bg-gray-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white resize-none overflow-y-auto leading-4 sm:leading-5 transition-colors rounded-xl',
+                  isCommentMultiline ? 'rounded-2xl' : 'rounded-xl',
+                ]"
+              ></textarea>
 
               <!-- Right-side actions (inside input) -->
-              <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <div
+                class="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-2"
+              >
                 <button
                   type="button"
                   @click="handleGifClick"
@@ -2299,6 +2469,47 @@ function handleEmojiClick() {
                   <FontAwesomeIcon :icon="faFaceLaughBeam" class="w-4 h-4" />
                 </button>
               </div>
+
+              <!-- Mention Dropdown -->
+              <div
+                v-show="
+                  showMentionDropdown && (mentionIsLoading || mentionSearchResults.length > 0)
+                "
+                data-mention-dropdown
+                class="absolute left-0 right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-30 max-h-64 overflow-y-auto"
+              >
+                <div v-if="mentionIsLoading" class="px-4 py-3 text-sm text-gray-500">
+                  Searching...
+                </div>
+                <div
+                  v-else-if="mentionSearchResults.length === 0"
+                  class="px-4 py-3 text-sm text-gray-500"
+                >
+                  No users found.
+                </div>
+                <div v-else>
+                  <button
+                    v-for="(user, index) in mentionSearchResults"
+                    :key="user.id"
+                    type="button"
+                    @click="selectMentionUser(user)"
+                    class="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0 text-left"
+                    :class="{ 'bg-blue-100': index === mentionActiveIndex }"
+                  >
+                    <img
+                      :src="getAvatarUrl(user.picture, user.first_name, user.last_name)"
+                      alt="user avatar"
+                      class="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                    />
+                    <div class="flex-1 min-w-0">
+                      <div class="font-medium text-gray-900 text-sm">{{ user.username }}</div>
+                      <div class="text-xs text-gray-500">
+                        {{ user.first_name }} {{ user.last_name }}
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- Send Button -->
@@ -2312,6 +2523,11 @@ function handleEmojiClick() {
               <FontAwesomeIcon :icon="faPaperPlane" class="w-5 h-5" />
             </button>
           </form>
+
+          <div
+            v-if="showMentionDropdown && (mentionIsLoading || mentionSearchResults.length > 0)"
+            class="h-64 mt-2"
+          ></div>
         </section>
       </transition>
     </article>
@@ -2744,7 +2960,7 @@ function handleEmojiClick() {
     <!-- FIXED Enhanced Image/Video Preview Modal -->
     <div
       v-if="showMediaModal"
-      class="fixed inset-0 bg-black/95 flex items-center justify-center z-[10000] p-4 backdrop-blur-sm"
+      class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[10000] p-4 backdrop-blur-sm"
       @click="closeMediaModal"
     >
       <div
@@ -3034,7 +3250,7 @@ function handleEmojiClick() {
                   )
                 "
                 alt="your avatar"
-                class="w-8 h-8 rounded-full object-cover flex-shrink-0 bg-gray-200"
+                class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0 bg-gray-200"
               />
 
               <div class="relative flex-1">
@@ -3042,10 +3258,12 @@ function handleEmojiClick() {
                   v-model="newCommentContent"
                   type="text"
                   placeholder="Add a comment..."
-                  class="w-full text-sm px-4 py-2 pr-20 rounded-full bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full text-sm sm:text-base px-4 py-2 sm:py-2.5 pr-12 sm:pr-20 rounded-xl bg-gray-100 border border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white leading-4 sm:leading-5"
                 />
 
-                <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                <div
+                  class="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-2"
+                >
                   <button
                     type="button"
                     @click="handleGifClick"
@@ -3163,9 +3381,9 @@ function handleEmojiClick() {
 
 /* Clean Comment Input Form Styles */
 .comment-input-form {
-  padding-top: 0.5rem !important;
-  padding-bottom: 0.5rem !important;
-  margin-top: -0.25rem !important; /* Shift the form up */
+  padding-top: 0.625rem !important;
+  padding-bottom: 0.625rem !important;
+  margin-top: 0 !important;
 }
 
 .comment-input-form .min-h-\[34px\] {
@@ -3578,8 +3796,8 @@ body.modal-open {
   }
 
   .comment-input-form {
-    padding: 0.375rem !important;
-    margin-top: -0.375rem !important;
+    padding: 0.5rem !important;
+    margin-top: 0 !important;
   }
 
   .comment-input-form img {

@@ -1,5 +1,7 @@
 # community/views.py
 from allauth.account.views import ConfirmEmailView
+from dj_rest_auth.views import PasswordResetView
+from allauth.account.models import EmailAddress
 from django.db.models import Q, Count
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -1479,29 +1481,23 @@ def health_check_view(request):
     return Response({"status": "ok"}, status=status.HTTP_200_OK)
 
 
-# --- ADD THIS ENTIRE CLASS AT THE END OF THE FILE ---
+# /////////////////////////////////////
 
 
 class CustomConfirmEmailView(ConfirmEmailView):
 
     def get(self, *args, **kwargs):
         try:
-            # The get_object() method finds the confirmation object from the URL key
             self.object = self.get_object()
         except Http404:
-            # If the key is invalid or expired, the object is not found.
             self.object = None
 
         if self.object:
-            # --- THIS IS THE CRITICAL LINE WE WERE MISSING ---
-            # The .confirm() method is what actually marks the email as verified in the database.
             self.object.confirm(self.request)
 
-            # Now that the database is updated, we can safely show the success page.
             self.template_name = "account/account_email_confirm.html"
             return self.render_to_response(self.get_context_data())
         else:
-            # If the key was invalid, we show the failure page.
             self.template_name = "account/email_confirmation_failed.html"
             return self.render_to_response(self.get_context_data())
 
@@ -1509,6 +1505,63 @@ class CustomConfirmEmailView(ConfirmEmailView):
         context = super().get_context_data(**kwargs)
         context["frontend_url"] = settings.FRONTEND_URL
         return context
+
+
+# Password reset now handled by CustomPasswordResetView below which reuses
+# the same verification sending used during registration.
+
+
+class CustomPasswordResetView(PasswordResetView):
+
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        if not email:
+            return Response(
+                {"detail": "Email is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            # Email does not exist in database - tell user to register first
+            return Response(
+                {
+                    "detail": "This email is not registered. Please create an account first.",
+                    "email_exists": False,
+                    "action_required": "register",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            email_address = EmailAddress.objects.get(user=user)
+            if not email_address.verified:
+                # Email exists but NOT verified - resend verification
+                email_address.send_confirmation()
+                return Response(
+                    {
+                        "detail": "Your email is not verified. We've sent a verification link to your email. Please verify your email first, then you can reset your password.",
+                        "verification_required": True,
+                        "email": user.email,
+                        "action_required": "verify_email",
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+        except EmailAddress.DoesNotExist:
+            return Response(
+                {
+                    "detail": "Your email needs verification. Please check your email for the verification link.",
+                    "verification_required": True,
+                    "email": user.email,
+                    "action_required": "verify_email",
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Email is verified - proceed with normal password reset
+        return super().post(request, *args, **kwargs)
 
 
 def password_reset_redirect_view(request, uidb64, token):
