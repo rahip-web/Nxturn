@@ -77,6 +77,26 @@ def validate_registration_username(username: str) -> str:
     return username
 
 
+def validate_login_username(username: str) -> str:
+    if not username:
+        raise serializers.ValidationError("Username is required.")
+
+    username = username.strip()
+
+    if not username:
+        raise serializers.ValidationError("Username is required.")
+
+    if username != username.lower():
+        raise serializers.ValidationError("Username must be lowercase.")
+
+    if not re.fullmatch(r"[a-z0-9_]+", username):
+        raise serializers.ValidationError(
+            "Use only lowercase letters and numbers. No spaces or symbols."
+        )
+
+    return username
+
+
 # ============================================================
 # EMAIL VALIDATION
 # ============================================================

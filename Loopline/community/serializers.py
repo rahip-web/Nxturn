@@ -17,6 +17,7 @@ from .validator import (
     validate_registration_email,
     validate_registration_username,
     validate_registration_password,
+    validate_login_username,
 )
 
 
@@ -1288,8 +1289,6 @@ class MessageCreateSerializer(serializers.Serializer):
         return value
 
 
-
-
 class CustomPasswordResetConfirmSerializer(PasswordResetConfirmSerializer):
     """
     Final, definitive, and self-contained serializer for password reset.
@@ -1349,6 +1348,10 @@ class CustomLoginSerializer(LoginSerializer):
     """
 
     def validate(self, attrs):
+        username = attrs.get("username")
+        if username:
+            attrs["username"] = validate_login_username(username)
+
         try:
             # First, run the standard validation from the parent class
             return super().validate(attrs)
@@ -1371,13 +1374,15 @@ class CustomLoginSerializer(LoginSerializer):
                         )
                         # Send verification email
                         email_address.send_confirmation()
-                        
+
                         # Raise custom error with verification message
-                        raise serializers.ValidationError({
-                            "detail": "Your email is not verified. Please check your inbox for a verification link. After verifying, you can log in or use the forgot password feature.",
-                            "verification_required": True,
-                            "email": email_or_username
-                        })
+                        raise serializers.ValidationError(
+                            {
+                                "detail": "Your email is not verified. Please check your inbox for a verification link. After verifying, you can log in or use the forgot password feature.",
+                                "verification_required": True,
+                                "email": email_or_username,
+                            }
+                        )
                     except EmailAddress.DoesNotExist:
                         pass  # Should not happen in normal flow
 

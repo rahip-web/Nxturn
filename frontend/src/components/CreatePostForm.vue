@@ -1043,7 +1043,7 @@ onUnmounted(() => {
         <img
           :src="getAvatarUrl(currentUser?.picture, currentUser?.first_name, currentUser?.last_name)"
           alt="Your avatar"
-          class="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover bg-gray-200 flex-shrink-0 -ml-2"
+          class="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover bg-gray-200 flex-shrink-0 -ml-1 sm:-ml-2"
         />
         <div class="w-full">
           <div v-if="!showPollCreator">
@@ -1158,7 +1158,7 @@ onUnmounted(() => {
       <!-- Media Previews -->
       <div
         v-if="selectedMediaFiles.length > 0 && !showPollCreator"
-        class="mt-3 sm:mt-4 pl-12 sm:pl-14"
+        class="mt-3 sm:mt-4 pl-10 sm:pl-14"
       >
         <div class="space-y-3 sm:space-y-4">
           <div
@@ -1267,10 +1267,10 @@ onUnmounted(() => {
       </div>
 
       <!-- Action Bar -->
-        <div
-        class="mt-3 sm:mt-4 flex justify-between items-center pl-2 xl:pl-14 border-t border-gray-100 pt-3 sm:pt-4"
+      <div
+        class="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pl-10 sm:pl-14 border-t border-gray-100 pt-3 sm:pt-4"
       >
-        <div class="flex gap-1 sm:gap-2 -ml-1 xl:ml-0">
+        <div class="flex flex-wrap gap-1 sm:gap-2 -ml-1 xl:ml-0">
           <!-- Image Upload Button -->
           <div class="relative group">
             <label
@@ -1435,7 +1435,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="flex items-center gap-2 sm:gap-4">
+        <div class="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
           <div
             class="text-xs sm:text-sm text-gray-500 bg-gray-100 px-2 py-1 sm:px-3 sm:py-2 rounded-lg"
           >

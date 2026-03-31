@@ -52,6 +52,7 @@
         <RouterLink
           to="/"
           data-cy="sidebar-home-link"
+          @click="scrollToTop"
           class="group flex items-center gap-3 px-3 py-1.5 rounded-xl font-medium transition-all duration-200 ease-out border border-transparent hover:border-orange-100 relative"
           :class="
             isHomeRouteActive
@@ -77,6 +78,7 @@
         <RouterLink
           to="/groups"
           data-cy="sidebar-groups-link"
+          @click="scrollToTop"
           class="group flex items-center gap-3 px-3 py-1.5 rounded-xl font-medium transition-all duration-200 ease-out border border-transparent hover:border-blue-100 relative"
           :class="
             isGroupsRouteActive
@@ -102,6 +104,7 @@
         <RouterLink
           to="/saved-posts"
           data-cy="sidebar-saved-posts-link"
+          @click="scrollToTop"
           class="group flex items-center gap-3 px-3 py-1.5 rounded-xl font-medium transition-all duration-200 ease-out border border-transparent hover:border-green-100 relative"
           :class="
             isSavedPostsRouteActive
@@ -156,4 +159,8 @@ const isGroupsRouteActive = computed(() => {
 const isSavedPostsRouteActive = computed(() => {
   return route.name === 'saved-posts'
 })
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 </script>

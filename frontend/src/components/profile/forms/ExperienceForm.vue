@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import type { Experience } from '@/types'
+import {
+  BriefcaseIcon,
+  BuildingOffice2Icon,
+  MapPinIcon,
+  CalendarDaysIcon,
+  DocumentTextIcon,
+} from '@heroicons/vue/24/solid'
 
 // --- Props & Emits ---
 const props = defineProps<{
@@ -136,134 +143,184 @@ function handleSubmit() {
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-4">
-    <!-- Title -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700"
-        >Job Title <span class="text-red-500">*</span></label
-      >
-      <input
-        v-model="title"
-        type="text"
-        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-        placeholder="e.g. Senior Software Engineer"
-      />
-      <p v-if="errors.title" class="text-red-500 text-xs mt-1">{{ errors.title }}</p>
+  <form @submit.prevent="handleSubmit" class="space-y-5">
+    <!-- Job Title -->
+    <div class="space-y-2">
+      <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+        <BriefcaseIcon class="h-4 w-4 text-blue-500" />
+        Job Title <span class="text-red-500">*</span>
+      </label>
+      <div class="relative">
+        <BriefcaseIcon
+          class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+        />
+        <input
+          v-model="title"
+          type="text"
+          class="block w-full rounded-lg border border-slate-200 bg-white px-10 py-2.5 text-sm text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          placeholder="e.g. Senior Software Engineer"
+        />
+      </div>
+      <p v-if="errors.title" class="text-xs text-red-500">{{ errors.title }}</p>
     </div>
 
     <!-- Company -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700"
-        >Company Name <span class="text-red-500">*</span></label
-      >
-      <input
-        v-model="company"
-        type="text"
-        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-        placeholder="e.g. Microsoft"
-      />
-      <p v-if="errors.company" class="text-red-500 text-xs mt-1">{{ errors.company }}</p>
+    <div class="space-y-2">
+      <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+        <BuildingOffice2Icon class="h-4 w-4 text-indigo-500" />
+        Company Name <span class="text-red-500">*</span>
+      </label>
+      <div class="relative">
+        <BuildingOffice2Icon
+          class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+        />
+        <input
+          v-model="company"
+          type="text"
+          class="block w-full rounded-lg border border-slate-200 bg-white px-10 py-2.5 text-sm text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          placeholder="e.g. Microsoft"
+        />
+      </div>
+      <p v-if="errors.company" class="text-xs text-red-500">{{ errors.company }}</p>
     </div>
 
     <!-- Location -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700">Location</label>
-      <input
-        v-model="location"
-        type="text"
-        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-        placeholder="e.g. Bangalore, India (Optional)"
-      />
+    <div class="space-y-2">
+      <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+        <MapPinIcon class="h-4 w-4 text-rose-500" />
+        Location
+      </label>
+      <div class="relative">
+        <MapPinIcon
+          class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+        />
+        <input
+          v-model="location"
+          type="text"
+          class="block w-full rounded-lg border border-slate-200 bg-white px-10 py-2.5 text-sm text-slate-800 shadow-sm outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          placeholder="e.g. Bangalore, India (Optional)"
+        />
+      </div>
     </div>
 
     <!-- Checkbox: Current Role -->
-    <div class="flex items-center gap-2 mt-2">
+    <div class="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2">
       <input
         id="isCurrent"
         v-model="isCurrentRole"
         type="checkbox"
-        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-200"
       />
-      <label for="isCurrent" class="text-sm text-gray-700 select-none">I currently work here</label>
+      <label for="isCurrent" class="text-sm font-medium text-slate-700 select-none">
+        I currently work here
+      </label>
     </div>
 
-    <!-- Dates Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Start Date -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700"
-          >Start Date <span class="text-red-500">*</span></label
-        >
-        <div class="flex gap-2 mt-1">
-          <select
-            v-model="startMonth"
-            class="block w-1/2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-          >
-            <option value="" disabled>Month</option>
-            <option v-for="m in MONTHS" :key="m.value" :value="m.value">{{ m.label }}</option>
-          </select>
-          <input
-            v-model="startYear"
-            type="number"
-            placeholder="Year"
-            min="1960"
-            :max="new Date().getFullYear() + 1"
-            class="block w-1/2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-          />
+    <!-- Dates -->
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div class="space-y-2">
+        <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <CalendarDaysIcon class="h-4 w-4 text-orange-500" />
+          Start Date <span class="text-red-500">*</span>
+        </label>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="relative">
+            <CalendarDaysIcon
+              class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            />
+            <select
+              v-model="startMonth"
+              class="block w-full rounded-lg border border-slate-200 bg-white px-9 py-2.5 text-sm text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="" disabled>Month</option>
+              <option v-for="m in MONTHS" :key="m.value" :value="m.value">{{ m.label }}</option>
+            </select>
+          </div>
+          <div class="relative">
+            <CalendarDaysIcon
+              class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              v-model="startYear"
+              type="number"
+              placeholder="Year"
+              min="1960"
+              :max="new Date().getFullYear() + 1"
+              class="block w-full rounded-lg border border-slate-200 bg-white px-9 py-2.5 text-sm text-slate-700 shadow-sm outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
         </div>
-        <p v-if="errors.startDate" class="text-red-500 text-xs mt-1">{{ errors.startDate }}</p>
+        <p v-if="errors.startDate" class="text-xs text-red-500">{{ errors.startDate }}</p>
       </div>
 
-      <!-- End Date -->
-      <div v-if="!isCurrentRole">
-        <label class="block text-sm font-medium text-gray-700"
-          >End Date <span class="text-red-500">*</span></label
-        >
-        <div class="flex gap-2 mt-1">
-          <select
-            v-model="endMonth"
-            class="block w-1/2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-          >
-            <option value="" disabled>Month</option>
-            <option v-for="m in MONTHS" :key="m.value" :value="m.value">{{ m.label }}</option>
-          </select>
-          <input
-            v-model="endYear"
-            type="number"
-            placeholder="Year"
-            min="1960"
-            :max="new Date().getFullYear() + 5"
-            class="block w-1/2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-          />
+      <div v-if="!isCurrentRole" class="space-y-2">
+        <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <CalendarDaysIcon class="h-4 w-4 text-teal-500" />
+          End Date <span class="text-red-500">*</span>
+        </label>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="relative">
+            <CalendarDaysIcon
+              class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            />
+            <select
+              v-model="endMonth"
+              class="block w-full rounded-lg border border-slate-200 bg-white px-9 py-2.5 text-sm text-slate-700 shadow-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="" disabled>Month</option>
+              <option v-for="m in MONTHS" :key="m.value" :value="m.value">{{ m.label }}</option>
+            </select>
+          </div>
+          <div class="relative">
+            <CalendarDaysIcon
+              class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              v-model="endYear"
+              type="number"
+              placeholder="Year"
+              min="1960"
+              :max="new Date().getFullYear() + 5"
+              class="block w-full rounded-lg border border-slate-200 bg-white px-9 py-2.5 text-sm text-slate-700 shadow-sm outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
         </div>
-        <p v-if="errors.endDate" class="text-red-500 text-xs mt-1">{{ errors.endDate }}</p>
+        <p v-if="errors.endDate" class="text-xs text-red-500">{{ errors.endDate }}</p>
       </div>
     </div>
 
     <!-- Description -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700">Description</label>
-      <textarea
-        v-model="description"
-        rows="4"
-        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-        placeholder="Describe your role, responsibilities, and achievements..."
-      ></textarea>
+    <div class="space-y-2">
+      <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+        <DocumentTextIcon class="h-4 w-4 text-amber-500" />
+        Description
+      </label>
+      <div class="relative">
+        <DocumentTextIcon
+          class="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400"
+        />
+        <textarea
+          v-model="description"
+          rows="5"
+          class="block w-full rounded-lg border border-slate-200 bg-white px-10 py-2.5 text-sm text-slate-700 shadow-sm outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 max-h-[10.5rem] overflow-y-auto resize-none"
+          placeholder="Describe your role, responsibilities, and achievements..."
+        ></textarea>
+      </div>
     </div>
 
     <!-- Actions -->
-    <div class="flex justify-end gap-3 pt-2">
+    <div class="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
       <button
         type="button"
         @click="emit('cancel')"
-        class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200"
       >
         Cancel
       </button>
       <button
         type="submit"
         :disabled="isSubmitting"
-        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {{ isSubmitting ? 'Saving...' : 'Save' }}
       </button>

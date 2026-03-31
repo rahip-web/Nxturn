@@ -83,7 +83,7 @@ function handleDone() {
             v-model="newSkillName"
             type="text"
             placeholder="Skill Name (e.g. React)"
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+            class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus:border-blue-500"
             @keyup.enter="handleAddSkill"
           />
         </div>
@@ -92,7 +92,7 @@ function handleDone() {
         <div class="w-1/3">
           <select
             v-model="newSkillProficiency"
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+            class="w-full p-2 border border-slate-300 rounded-md text-sm outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus:border-blue-500"
           >
             <option value="beginner">Beginner</option>
             <option value="intermediate">Intermediate</option>

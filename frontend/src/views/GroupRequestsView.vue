@@ -115,11 +115,20 @@ function formatTimestamp(dateString: string) {
 
 <template>
   <!-- Added pb-16 for mobile to prevent content hiding behind navbar -->
-  <div class="max-w-4xl mx-auto pb-16 sm:pb-0">
+  <div class="w-full max-w-4xl mx-auto px-0 sm:px-0 pb-16 sm:pb-0">
     <!-- "Manage Group Members" title with container - Reverted to original styling -->
     <div
-      class="bg-gradient-to-r from-blue-700 to-purple-900 rounded-2xl p-6 mb-3 shadow-lg border border-gray-700"
+      class="bg-gradient-to-r from-blue-700 to-purple-900 rounded-2xl p-6 mb-3 shadow-lg border border-gray-700 relative"
     >
+      <!-- Back button pinned to top-right -->
+      <RouterLink
+        v-if="currentGroup"
+        :to="{ name: 'group-detail', params: { slug: currentGroup.slug } }"
+        class="absolute top-4 right-4 inline-flex items-center space-x-2 px-3 py-1 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:border-blue-200 hover:from-blue-100 hover:to-indigo-100 transition-all duration-300 shadow-sm hover:shadow"
+      >
+        <ArrowLeftIcon class="h-4 w-4 text-blue-600" />
+        <!-- <span class="font-semibold text-blue-700 text-sm">Back</span> -->
+      </RouterLink>
       <div class="flex items-center space-x-4">
         <div class="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-md">
           <ShieldCheckIcon class="h-8 w-8 text-white" />
@@ -132,27 +141,16 @@ function formatTimestamp(dateString: string) {
         </div>
       </div>
 
-      <div class="flex items-center justify-between mt-6">
-        <!-- Back button and Group name containers side by side -->
-        <div class="flex items-center space-x-3">
-          <!-- Back button with icon -->
-          <RouterLink
-            v-if="currentGroup"
-            :to="{ name: 'group-detail', params: { slug: currentGroup.slug } }"
-            class="inline-flex items-center space-x-2 px-3 py-1 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:border-blue-200 hover:from-blue-100 hover:to-indigo-100 transition-all duration-300 shadow-sm hover:shadow"
-          >
-            <ArrowLeftIcon class="h-4 w-4 text-blue-600" />
-            <span class="font-semibold text-blue-700 text-sm">Back</span>
-          </RouterLink>
-
-          <!-- Group name with icon - All in one row -->
-          <div
-            v-if="currentGroup"
-            class="inline-flex items-center space-x-3 px-5 py-1 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100"
-          >
-            <UserGroupIcon class="h-6 w-6 text-blue-600" />
-            <span class="text-gray-800 font-semibold text-sm">{{ currentGroup.name }}</span>
-          </div>
+      <div class="mt-6 flex flex-col sm:flex-row sm:items-center gap-3">
+        <!-- Group name with icon - All in one row -->
+        <div
+          v-if="currentGroup"
+          class="inline-flex items-center space-x-3 px-5 py-1 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 max-w-full min-w-0"
+        >
+          <UserGroupIcon class="h-6 w-6 text-blue-600 shrink-0" />
+          <span class="text-gray-800 font-semibold text-sm truncate max-w-[22rem] sm:max-w-[26rem]">
+            {{ currentGroup.name }}
+          </span>
         </div>
       </div>
     </div>
@@ -291,13 +289,13 @@ function formatTimestamp(dateString: string) {
         <div
           v-for="request in joinRequests"
           :key="request.id"
-          class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-50 transition-colors duration-150 relative"
+          class="p-4 sm:p-5 flex flex-col sm:flex-row sm:flex-nowrap sm:items-center gap-3 sm:gap-6 justify-between hover:bg-gray-50 transition-colors duration-150 relative"
         >
-          <div class="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-0">
+          <div class="flex items-center space-x-3 sm:space-x-4 min-w-0">
             <img
               :src="request.user.picture || defaultAvatar"
               alt="User avatar"
-              class="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-gray-200"
+              class="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-gray-200 shrink-0"
             />
             <div class="flex-1 min-w-0">
               <RouterLink
@@ -312,7 +310,7 @@ function formatTimestamp(dateString: string) {
             </div>
           </div>
           <div
-            class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto"
+            class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto sm:shrink-0"
           >
             <button
               @click="handleApprove(request.id)"
@@ -405,13 +403,13 @@ function formatTimestamp(dateString: string) {
         <div
           v-for="block in blockedUsers"
           :key="block.id"
-          class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-50 transition-colors duration-150"
+          class="p-4 sm:p-5 flex flex-col sm:flex-row sm:flex-nowrap sm:items-center gap-3 sm:gap-6 justify-between hover:bg-gray-50 transition-colors duration-150"
         >
-          <div class="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-0">
+          <div class="flex items-center space-x-3 sm:space-x-4 min-w-0">
             <img
               :src="block.user.picture || defaultAvatar"
               alt="User avatar"
-              class="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-gray-200"
+              class="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-gray-200 shrink-0"
             />
             <div class="flex-1 min-w-0">
               <RouterLink
@@ -427,7 +425,7 @@ function formatTimestamp(dateString: string) {
           </div>
           <button
             @click="handleUnblock(block.user.id)"
-            class="px-4 sm:px-5 py-2.5 bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 text-xs sm:text-sm font-semibold rounded-xl sm:rounded-2xl hover:from-gray-400 hover:to-gray-500 transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm hover:shadow w-full sm:w-auto"
+            class="px-4 sm:px-5 py-2.5 bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 text-xs sm:text-sm font-semibold rounded-xl sm:rounded-2xl hover:from-gray-400 hover:to-gray-500 transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm hover:shadow w-full sm:w-auto sm:shrink-0"
           >
             <EyeIcon class="h-3 w-3 sm:h-4 sm:w-4" />
             <span>Unblock</span>

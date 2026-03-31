@@ -33,7 +33,7 @@ const filteredAttributes = computed(() => {
 const containerClass = computed(() => {
   // We use YOUR max-h-[90vh] because 70vh is too short for our forms
   const base =
-    'relative flex flex-col w-full min-h-0 bg-white shadow-xl overflow-hidden max-h-[calc(100vh-2rem)] sm:max-h-[90vh] rounded-none sm:rounded-lg'
+    'relative flex flex-col w-full min-h-0 bg-white/95 backdrop-blur-xl shadow-[0_20px_60px_-20px_rgba(2,6,23,0.45)] border border-sky-200/80 ring-1 ring-sky-500/20 overflow-hidden max-h-[calc(100dvh-2rem)] sm:max-h-[90dvh] rounded-2xl'
   const maxWidthClass =
     props.maxWidth || 'max-w-none sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl'
 
@@ -58,7 +58,7 @@ function closeModal() {
     >
       <div
         v-if="show"
-        class="fixed inset-0 z-40 bg-black bg-opacity-60 backdrop-blur-sm"
+        class="fixed inset-0 z-40 bg-gradient-to-b from-slate-950/70 via-slate-900/60 to-slate-950/70 backdrop-blur-sm"
         @click="closeModal"
       ></div>
     </transition>
@@ -75,17 +75,21 @@ function closeModal() {
       <!-- Click container for "click outside" -->
       <div
         v-if="show"
-        class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
+        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4 md:p-6 pb-[calc(0.5rem+env(safe-area-inset-bottom))] overflow-y-auto"
         @click="closeModal"
       >
         <!-- Modal panel - Using the merged containerClass and filteredAttributes -->
         <div :class="containerClass" v-bind="filteredAttributes" @click.stop>
           <!-- Modal Header (flex-shrink-0 prevents it from disappearing - Your Fix) -->
-          <div class="flex items-center justify-between p-4 sm:p-5 border-b flex-shrink-0">
-            <h3 class="text-base sm:text-lg font-semibold text-gray-800">{{ title }}</h3>
+          <div
+            class="flex items-center justify-between gap-3 p-4 sm:p-5 md:p-6 border-b border-slate-200/70 bg-white/80 backdrop-blur flex-shrink-0"
+          >
+            <h3 class="text-base sm:text-lg md:text-xl font-semibold text-slate-900">
+              {{ title }}
+            </h3>
             <button
               @click="closeModal"
-              class="p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              class="p-2 rounded-full text-slate-400 hover:bg-slate-100/80 hover:text-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
               aria-label="Close modal"
             >
               <XMarkIcon class="w-6 h-6" />
@@ -93,14 +97,14 @@ function closeModal() {
           </div>
 
           <!-- Modal Body (overflow-y-auto enables scrolling - Your Fix) -->
-          <div class="p-4 sm:p-6 overflow-y-auto flex-grow min-h-0">
+          <div class="p-4 sm:p-6 md:p-7 overflow-y-auto flex-grow min-h-0 text-slate-700">
             <slot></slot>
           </div>
 
           <!-- Modal Footer (flex-shrink-0 prevents it from disappearing - Your Fix) -->
           <div
             v-if="$slots.footer"
-            class="p-4 sm:p-5 bg-gray-50 border-t rounded-b-none sm:rounded-b-lg flex-shrink-0"
+            class="p-4 sm:p-5 bg-slate-50/70 border-t border-slate-200/70 flex-shrink-0"
           >
             <slot name="footer"></slot>
           </div>

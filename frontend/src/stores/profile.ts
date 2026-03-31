@@ -384,12 +384,24 @@ export const useProfileStore = defineStore('profile', () => {
     }
   }
 
-  // --- CONTACT ACTIONS (NEW) ---
+  // --- CONTACT ACTIONS  ---
   async function updateContactDetails(payload: Partial<UserProfile>) {
     try {
       const response = await axiosInstance.patch<UserProfile>('/profile/contact/', payload)
+      const updatedFields = {
+        phone_number: response.data.phone_number,
+        phone_visibility: response.data.phone_visibility,
+        email_visibility: response.data.email_visibility,
+        email: response.data.email,
+      }
+
       if (currentProfile.value) {
-        Object.assign(currentProfile.value, response.data)
+        Object.assign(currentProfile.value, updatedFields)
+      }
+
+      const updatedUsername = response.data?.user?.username
+      if (updatedUsername && profilesByUsername.value[updatedUsername]) {
+        Object.assign(profilesByUsername.value[updatedUsername], updatedFields)
       }
       return response.data
     } catch (err: any) {

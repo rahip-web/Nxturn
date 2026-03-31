@@ -19,6 +19,11 @@ import './commands'
  * We make `failOnStatusCode: false` so a cleanup failure doesn't stop the tests.
  */
 function cleanupDatabase() {
+  const skipSetup = Cypress.env('CYPRESS_SKIP_TEST_SETUP')
+  if (skipSetup) {
+    cy.log('Skipping backend cleanup (CYPRESS_SKIP_TEST_SETUP is true).')
+    return
+  }
   cy.request({
     method: 'POST',
     url: `${Cypress.env('VITE_API_BASE_URL')}/api/test/setup/`,
@@ -28,10 +33,10 @@ function cleanupDatabase() {
     failOnStatusCode: false,
   }).then((response) => {
     if (response.status === 200) {
-      cy.log('✅ Backend cleanup successful:', response.body)
+      cy.log('Backend cleanup successful:', response.body)
     } else {
       // Log a warning instead of failing the test run
-      cy.log('⚠️ Backend cleanup may have failed.', {
+      cy.log('Backend cleanup may have failed.', {
         status: response.status,
         body: response.body,
       })

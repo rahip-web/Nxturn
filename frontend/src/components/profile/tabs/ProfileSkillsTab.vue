@@ -102,10 +102,18 @@ const handleDeleteSkill = async (skillId: number) => {
 <template>
   <div class="space-y-6">
     <!-- Header / Add Button -->
-    <div v-if="isOwner" class="flex justify-end">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-200/70 pb-4">
+      <div>
+        <h3 class="text-lg font-bold text-slate-900">Skills & Expertise</h3>
+        <p class="text-sm text-slate-500">
+          Group your skills into focused categories for a cleaner profile.
+        </p>
+      </div>
+
       <button
+        v-if="isOwner"
         @click="openAddCategory"
-        class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors font-medium text-sm"
+        class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-sm transition-colors font-semibold text-sm"
       >
         <PlusIcon class="w-5 h-5" />
         Add Category
@@ -115,13 +123,27 @@ const handleDeleteSkill = async (skillId: number) => {
     <!-- Empty State -->
     <div
       v-if="categories.length === 0"
-      class="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300"
+      class="text-center py-12 sm:py-14 bg-gradient-to-br from-slate-50 via-white to-slate-50 rounded-2xl border border-dashed border-slate-200"
     >
-      <p class="text-gray-500">No skills added yet.</p>
+      <div
+        class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600"
+      >
+        <PlusIcon class="h-6 w-6" />
+      </div>
+      <p class="text-slate-600 font-medium">No skills added yet.</p>
+      <p class="text-sm text-slate-400 mt-1">Create a category to get started.</p>
+      <button
+        v-if="isOwner"
+        @click="openAddCategory"
+        class="mt-4 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+      >
+        <PlusIcon class="w-4 h-4" />
+        New Category
+      </button>
     </div>
 
     <!-- Categories Grid -->
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
       <SkillCategoryCard
         v-for="cat in categories"
         :key="cat.id"
@@ -145,7 +167,7 @@ const handleDeleteSkill = async (skillId: number) => {
             v-model="newCategoryName"
             type="text"
             placeholder="e.g. Frontend, DevOps, Hobbies"
-            class="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            class="mt-1 w-full p-2 border border-blue-400 rounded-md outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus:border-blue-500"
             autofocus
           />
         </div>

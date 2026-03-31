@@ -526,7 +526,7 @@ async function removeBackgroundImage() {
 <template>
   <!-- Increased main container width -->
   <!-- Mobile safe bottom padding so content won't hide behind bottom navbar -->
-  <div class="max-w-6xl mx-auto px-0 sm:px-0 pb-6 sm:pb-0">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-0">
     <div v-if="isLoadingGroup && !currentGroup" class="text-center py-10 text-gray-500">
       <p>Loading group...</p>
     </div>

@@ -19,6 +19,17 @@ declare module 'vue-router' {
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
+  scrollBehavior(to, from, savedPosition) {
+    // Always reset scroll for primary community pages
+    if (to.name === 'feed' || to.name === 'group-list' || to.name === 'saved-posts') {
+      return { top: 0, behavior: 'smooth' }
+    }
+
+    // Preserve browser history position when available
+    if (savedPosition) return savedPosition
+
+    return { top: 0, behavior: 'smooth' }
+  },
   routes: [
     // --- ROUTE GROUP 1: Uses the 3-Column Community Layout ---
     {
