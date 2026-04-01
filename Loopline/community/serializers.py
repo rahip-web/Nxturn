@@ -18,6 +18,7 @@ from .validator import (
     validate_registration_username,
     validate_registration_password,
     validate_login_username,
+    validate_login_email,
 )
 
 
@@ -1349,7 +1350,17 @@ class CustomLoginSerializer(LoginSerializer):
 
     def validate(self, attrs):
         username = attrs.get("username")
-        if username:
+        email = attrs.get("email")
+
+        if username and "@" in username and not email:
+            email = username
+            attrs["email"] = email
+            attrs["username"] = None
+
+        if email:
+            attrs["email"] = validate_login_email(email)
+
+        if username and not email:
             attrs["username"] = validate_login_username(username)
 
         try:

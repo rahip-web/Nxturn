@@ -98,6 +98,45 @@ def validate_login_username(username: str) -> str:
 
 
 # ============================================================
+# LOGIN EMAIL VALIDATION
+# ============================================================
+
+
+def validate_login_email(email: str) -> str:
+    if not email:
+        raise serializers.ValidationError("Email is required.")
+
+    email = email.strip()
+    if any(ch.isspace() for ch in email):
+        raise serializers.ValidationError("Email cannot contain spaces.")
+
+    if not email.isascii():
+        raise serializers.ValidationError("Email must contain only English characters.")
+
+    if email.count("@") != 1:
+        raise serializers.ValidationError("Enter a valid email address.")
+
+    local_part, domain = email.split("@", 1)
+
+    if not local_part:
+        raise serializers.ValidationError("Email username (before @) cannot be empty.")
+
+    if not domain:
+        raise serializers.ValidationError("Email domain (after @) cannot be empty.")
+
+    if not EMAIL_LOCAL_ALLOWED_RE.fullmatch(local_part):
+        raise serializers.ValidationError("Email username is invalid.")
+
+    if local_part.startswith(".") or local_part.endswith(".") or ".." in local_part:
+        raise serializers.ValidationError("Email username is invalid.")
+
+    if not EMAIL_DOMAIN_ALLOWED_RE.fullmatch(domain):
+        raise serializers.ValidationError("Email domain is invalid.")
+
+    return email.lower()
+
+
+# ============================================================
 # EMAIL VALIDATION
 # ============================================================
 
