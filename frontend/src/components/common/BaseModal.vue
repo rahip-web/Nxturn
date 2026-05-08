@@ -75,7 +75,7 @@ function closeModal() {
       <!-- Click container for "click outside" -->
       <div
         v-if="show"
-        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4 md:p-6 pb-[calc(0.5rem+env(safe-area-inset-bottom))] overflow-y-auto"
+        class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 pb-[calc(0.5rem+env(safe-area-inset-bottom))] overflow-y-auto"
         @click="closeModal"
       >
         <!-- Modal panel - Using the merged containerClass and filteredAttributes -->
@@ -97,7 +97,9 @@ function closeModal() {
           </div>
 
           <!-- Modal Body (overflow-y-auto enables scrolling - Your Fix) -->
-          <div class="p-4 sm:p-6 md:p-7 overflow-y-auto flex-grow min-h-0 text-slate-700">
+          <div
+            class="p-4 sm:p-6 md:p-7 overflow-y-auto flex-grow min-h-0 text-slate-700 flex flex-col items-center justify-center text-center sm:block sm:text-left"
+          >
             <slot></slot>
           </div>
 

@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth'
 import CommunityLayout from '@/layouts/CommunityLayout.vue'
 import ProfileLayout from '@/layouts/ProfileLayout.vue'
 import ExploreLayout from '@/layouts/ExploreLayout.vue'
+import MessagesLayout from '@/layouts/MessagesLayout.vue'
 import axiosInstance from '@/services/axiosInstance'
 import CheckEmailView from '../views/auth/CheckEmailView.vue'
 import ForgotPasswordView from '../views/auth/ForgotPasswordView.vue'
@@ -68,6 +69,19 @@ const router = createRouter({
           path: 'posts/:postId',
           name: 'single-post',
           component: () => import('@/views/SinglePostView.vue'),
+        },
+      ],
+    },
+    // --- ROUTE GROUP: Messages (full-width, no community sidebars) ---
+    {
+      path: '/messages',
+      component: MessagesLayout,
+      meta: { requiresAuth: true },
+      children: [
+        {
+          path: '',
+          name: 'messages',
+          component: () => import('@/views/MessagesView.vue'),
         },
       ],
     },

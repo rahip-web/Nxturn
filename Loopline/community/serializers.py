@@ -126,7 +126,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "email", "picture"]
+        fields = ["id", "username", "first_name","last_name", "picture"]
 
     def get_picture(self, obj):
         """
@@ -463,7 +463,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     phone_number = serializers.SerializerMethodField()
 
     # --- NEW: Dynamic Count Fields Added ---
-    followers_count = serializers.SerializerMethodField()
+    followers_count = serializers.SerializerMethodField() 
     following_count = serializers.SerializerMethodField()
     connections_count = serializers.SerializerMethodField()
     posts_count = serializers.SerializerMethodField()

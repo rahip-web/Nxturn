@@ -5,6 +5,7 @@ import json
 from urllib.parse import parse_qs
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
+from django.db import DatabaseError, OperationalError
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
 
@@ -14,7 +15,7 @@ def get_user_from_token(token_key):
     try:
         token = Token.objects.get(key=token_key)
         return token.user
-    except Token.DoesNotExist:
+    except (Token.DoesNotExist, OperationalError, DatabaseError):
         return None
 
 class UserActivityConsumer(WebsocketConsumer):
@@ -32,7 +33,7 @@ class UserActivityConsumer(WebsocketConsumer):
             return
             
         user = get_user_from_token(token_key)
-        
+
         if user is None:
             self.close()
             return

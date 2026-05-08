@@ -35,7 +35,7 @@ const institutes: Institute[] = [
 </script>
 
 <template>
-  <div class="relative left-[-12px] w-full">
+    <div class="relative left-[-12px] w-full z-20">
     <div class="flex justify-start">
       <div class="space-y-6">
         <div

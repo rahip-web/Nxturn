@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useProfileStore } from '@/stores/profile'
 import { storeToRefs } from 'pinia'
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import chatApi from '@/services/chatApi'
 
 // Import filled icons from Heroicons
 import { ClockIcon } from '@heroicons/vue/24/outline'
@@ -16,9 +18,14 @@ import {
 } from '@heroicons/vue/24/solid'
 
 const profileStore = useProfileStore()
+const router = useRouter()
 const { relationshipStatus, currentProfile, isLoadingFollow } = storeToRefs(profileStore)
 
 const showDisconnectConfirm = ref(false)
+const hasConversation = ref(false)
+const lastMessagePreview = ref('')
+const lastMessageTime = ref('')
+const unreadMessageCount = ref(0)
 const isHovering = ref({
   connect: false,
   follow: false,
@@ -65,7 +72,47 @@ const handleDisconnect = (event: MouseEvent) => {
 
 const handleMessage = (event: MouseEvent) => {
   event.stopPropagation()
-  console.log('Messaging functionality to be implemented.')
+  if (currentProfile.value?.user?.username) {
+    router.push({
+      name: 'messages',
+      query: { user: currentProfile.value.user.username },
+    })
+  }
+}
+
+const loadConversationSummary = async () => {
+  hasConversation.value = false
+  lastMessagePreview.value = ''
+  lastMessageTime.value = ''
+  unreadMessageCount.value = 0
+
+  const profileUserId = currentProfile.value?.user?.id
+  if (!profileUserId) return
+
+  try {
+    const res = await chatApi.get('chat/conversations/')
+    const conversation = (res.data || []).find((item: any) => Number(item.id) === Number(profileUserId))
+    if (!conversation) return
+
+    hasConversation.value = true
+    lastMessagePreview.value = conversation.last_message || ''
+    lastMessageTime.value = conversation.last_message_time || ''
+    unreadMessageCount.value = Number(conversation.unread_count || 0)
+  } catch {
+    // silent
+  }
+}
+
+const formatConversationTime = (value: string) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
 }
 
 // Improved ripple effect handler without layout shifts
@@ -136,12 +183,23 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
 })
+
+watch(
+  () => currentProfile.value?.user?.id,
+  () => {
+    loadConversationSummary()
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
-  <div v-if="relationshipStatus" class="flex items-center space-x-3">
-    <!-- CONNECT BUTTON -->
-    <div class="relative overflow-visible">
+  <div v-if="relationshipStatus" class="space-y-3">
+
+
+    <div class="flex items-center space-x-3">
+      <!-- CONNECT BUTTON -->
+      <div class="relative overflow-visible">
       <!-- State: Not Connected -->
       <button
         v-if="relationshipStatus.connection_status === 'not_connected'"
@@ -311,8 +369,8 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- FOLLOW BUTTON -->
-    <div v-if="relationshipStatus.connection_status !== 'connected'" class="overflow-visible">
+      <!-- FOLLOW BUTTON -->
+      <div v-if="relationshipStatus.connection_status !== 'connected'" class="overflow-visible">
       <button
         @click.stop="handleFollowToggle"
         @mouseenter="isHovering.follow = true"
@@ -365,8 +423,8 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- MESSAGE BUTTON -->
-    <div class="overflow-visible">
+      <!-- MESSAGE BUTTON -->
+      <div class="overflow-visible">
       <button
         @click.stop="handleMessage"
         @mouseenter="isHovering.message = true"
@@ -396,6 +454,7 @@ onUnmounted(() => {
           Message
         </span>
       </button>
+      </div>
     </div>
   </div>
 </template>

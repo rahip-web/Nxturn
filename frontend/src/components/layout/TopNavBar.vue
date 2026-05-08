@@ -13,6 +13,7 @@ import { useGroupStore } from '@/stores/group'
 import { usePostsStore } from '@/stores/posts'
 import type { Post } from '@/types'
 import eventBus from '@/services/eventBus'
+import axiosInstance from '@/services/axiosInstance'
 
 // Import animate.css ONLY for bell animation
 import 'animate.css'
@@ -141,6 +142,22 @@ const mobileSearchInputRef = ref<HTMLInputElement | null>(null)
 const isBellRinging = ref(false)
 let bellInterval: number | null = null
 
+// --- Unread message count from messaging microservice ---
+const unreadMessageCount = ref(0)
+let msgPollInterval: number | null = null
+
+async function fetchUnreadMessages() {
+  if (!authStore.isAuthenticated) return
+  try {
+    const mainBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/'
+    const chatBase = mainBase.replace(/:\d+(\/.*)?$/, ':8001/')
+    const res = await axiosInstance.get(`${chatBase}chat/unread-count/`)
+    unreadMessageCount.value = res.data?.count ?? 0
+  } catch {
+    // silent — microservice may not be running
+  }
+}
+
 // Check if we're on the current user's profile page
 const isOnOwnProfilePage = computed(() => {
   return route.name === 'profile' && route.params.username === currentUser.value?.username
@@ -188,11 +205,16 @@ watch(unreadCount, (newCount) => {
 // Stop animation when component unmounts
 onUnmounted(() => {
   stopBellAnimation()
+  if (msgPollInterval) clearInterval(msgPollInterval)
   document.removeEventListener('click', closeSearchDropdownOnClickOutside)
   document.removeEventListener('click', closeAllMenusOnClickOutside)
   document.removeEventListener('click', closeMobileMenuOnClickOutside)
   document.body.style.overflow = ''
 })
+
+// Start fetching unread message count immediately and every 10s
+fetchUnreadMessages()
+msgPollInterval = window.setInterval(fetchUnreadMessages, 10000)
 
 function handleLogoClick(event: MouseEvent) {
   if (route.path === '/') {
@@ -881,10 +903,9 @@ const currentUsername = computed(() => currentUser.value?.username || '')
               <span class="nav-label nav-label-network">Network</span>
             </button>
 
-            <!-- MESSAGES (Now with color-filled solid icon and slightly bigger) -->
-            <button
-              type="button"
-              @click="handleNonNavigableClick"
+            <!-- MESSAGES -->
+            <RouterLink
+              :to="{ name: 'messages' }"
               class="nav-btn group relative flex flex-col items-center justify-center gap-0 focus-ring min-w-[50px] lg:min-w-[60px] hover:bg-messages-hover"
               aria-label="Messaging"
             >
@@ -893,8 +914,14 @@ const currentUsername = computed(() => currentUser.value?.username || '')
                 aria-hidden="true"
               />
               <span class="nav-label nav-label-messages">Messages</span>
-              <span class="notification-badge" aria-label="3 unread messages">3</span>
-            </button>
+              <span
+                v-if="unreadMessageCount > 0"
+                class="notification-badge"
+                aria-label="unread messages"
+              >
+                {{ unreadMessageCount > 9 ? '9+' : unreadMessageCount }}
+              </span>
+            </RouterLink>
 
             <!-- NOTIFICATIONS -->
             <RouterLink
@@ -1570,14 +1597,20 @@ const currentUsername = computed(() => currentUser.value?.username || '')
               </button>
 
               <!-- MESSAGES (Swapped in mobile too) -->
-              <button
-                @click="handleNonNavigableClick"
-                class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-messages-hover transition-colors text-left"
+              <RouterLink
+                :to="{ name: 'messages' }"
+                @click="handleMobileNavigation"
+                class="flex items-center gap-3 p-3 rounded-lg hover:bg-messages-hover transition-colors"
               >
                 <ChatBubbleLeftRightIconSolid class="h-6 w-6 text-current" />
                 <span class="font-medium text-gray-900">Messages</span>
-                <span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">3</span>
-              </button>
+                <span
+                  v-if="unreadMessageCount > 0"
+                  class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full"
+                >
+                  {{ unreadMessageCount > 9 ? '9+' : unreadMessageCount }}
+                </span>
+              </RouterLink>
 
               <!-- NOTIFICATIONS -->
               <RouterLink

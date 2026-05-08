@@ -524,9 +524,9 @@ async function removeBackgroundImage() {
 </script>
 
 <template>
-  <!-- Increased main container width -->
+  <!-- Match spacing with other group pages -->
   <!-- Mobile safe bottom padding so content won't hide behind bottom navbar -->
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-0">
+  <div class="max-w-4xl mx-auto px-0 sm:px-0 pb-3 sm:pb-0">
     <div v-if="isLoadingGroup && !currentGroup" class="text-center py-10 text-gray-500">
       <p>Loading group...</p>
     </div>
@@ -535,8 +535,8 @@ async function removeBackgroundImage() {
       <p>{{ groupError }}</p>
     </div>
     <div v-else-if="currentGroup">
-      <!-- Group Header - Increased width -->
-      <header class="bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+      <!-- Group Header -->
+      <header class="bg-white rounded-2xl shadow-sm border border-gray-200 mb-3 overflow-hidden">
         <!-- Background Photo Area -->
         <div
           class="h-40 relative"
@@ -815,8 +815,7 @@ async function removeBackgroundImage() {
       </header>
 
       <!-- Tabs Navigation - Mobile: icon above text, Desktop: icon left of text -->
-      <!-- Reduced space before & after tabs -->
-      <div class="-mt-1 mb-3">
+      <div class="mb-3">
         <div class="border-b border-gray-200">
           <nav class="flex" aria-label="Tabs">
             <!-- About Tab (Soft Blue) -->
@@ -896,8 +895,8 @@ async function removeBackgroundImage() {
 
       <!-- Tab Content -->
       <div>
-        <!-- About Tab - Increased width -->
-        <div v-if="activeTab === 'about'" class="bg-white rounded-lg shadow-md p-5">
+        <!-- About Tab -->
+        <div v-if="activeTab === 'about'" class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-5">
           <div class="flex items-center gap-3 mb-6">
             <div
               class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0"
@@ -1107,7 +1106,7 @@ async function removeBackgroundImage() {
         </div>
 
         <!-- Members Tab -->
-        <div v-if="activeTab === 'members'" class="bg-white rounded-lg shadow-md">
+        <div v-if="activeTab === 'members'" class="bg-white rounded-2xl shadow-sm border border-gray-200">
           <!-- Members List -->
           <div class="divide-y divide-gray-200">
             <!-- Creator (always first) -->

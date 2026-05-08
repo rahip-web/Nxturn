@@ -197,6 +197,20 @@ const postArticleRef = ref<HTMLElement | null>(null)
 const isReportModalOpen = ref(false)
 const reportTarget = ref<{ ct_id: number; obj_id: number } | null>(null)
 
+const trimmedPollQuestion = computed(() => editPollQuestion.value.trim())
+const trimmedPollOptions = computed(() =>
+  editPollOptions.value.map((opt) => ({ ...opt, text: opt.text.trim() })),
+)
+const nonEmptyPollOptions = computed(() =>
+  trimmedPollOptions.value.filter((opt) => opt.text.length > 0),
+)
+const hasEmptyPollOption = computed(() =>
+  trimmedPollOptions.value.some((opt) => opt.text.length === 0),
+)
+const isPollEditValid = computed(() => {
+  return trimmedPollQuestion.value.length > 0 && nonEmptyPollOptions.value.length >= 2 && !hasEmptyPollOption.value
+})
+
 // Modal-specific report state
 const isModalReportModalOpen = ref(false)
 const modalReportTarget = ref<{ ct_id: number; obj_id: number } | null>(null)
@@ -943,6 +957,7 @@ const handleNewFilesEdit = async (event: Event, type: 'image' | 'video') => {
 onMounted(() => {
   checkIfMobile()
   window.addEventListener('resize', checkIfMobile)
+  window.addEventListener('scroll', handleOptionsMenuScroll, true)
   nextTick(() => {
     checkContentOverflow()
   })
@@ -959,6 +974,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkIfMobile)
+  window.removeEventListener('scroll', handleOptionsMenuScroll, true)
   window.removeEventListener('video-play', handleGlobalVideoPlay as EventListener)
   document.removeEventListener('keydown', handleKeydown)
   document.removeEventListener('click', closeOnClickOutside, true)
@@ -1322,6 +1338,11 @@ const closeOnClickOutside = (event: MouseEvent) => {
   if (optionsMenuRef.value && !optionsMenuRef.value.contains(event.target as Node))
     showOptionsMenu.value = false
 }
+const handleOptionsMenuScroll = () => {
+  if (showOptionsMenu.value) {
+    showOptionsMenu.value = false
+  }
+}
 watch(showOptionsMenu, (isOpen) => {
   if (isOpen) document.addEventListener('click', closeOnClickOutside, true)
   else document.removeEventListener('click', closeOnClickOutside, true)
@@ -1503,7 +1524,14 @@ function toggleEditMode() {
   }
 }
 function addPollOptionToEdit() {
-  if (editPollOptions.value.length < 5) editPollOptions.value.push({ id: null, text: '' })
+  if (editPollOptions.value.length >= 5) return
+  const lastOption = editPollOptions.value[editPollOptions.value.length - 1]
+  if (lastOption && lastOption.text.trim().length === 0) {
+    localEditError.value = 'Please fill the current option before adding a new one.'
+    return
+  }
+  localEditError.value = null
+  editPollOptions.value.push({ id: null, text: '' })
 }
 function removePollOptionFromEdit(index: number) {
   if (editPollOptions.value.length <= 2) return
@@ -1543,10 +1571,7 @@ function cancelEdit() {
   newImagePreviewUrls.value = []
   newVideoPreviewUrls.value = []
 
-  // Center the post in viewport
-  nextTick(() => {
-    centerPostInViewport()
-  })
+  // Keep scroll position stable
 }
 
 async function handleUpdatePost() {
@@ -1576,9 +1601,7 @@ async function handleUpdatePost() {
     compressionProgress.value = 0
     processingMessages.value = []
 
-    nextTick(() => {
-      centerPostInViewport()
-    })
+    // Keep scroll position stable
   } catch (err: any) {
     localEditError.value = err.response?.data?.detail || 'Failed to update post.'
   } finally {
@@ -1588,11 +1611,27 @@ async function handleUpdatePost() {
 
 async function handleUpdatePoll() {
   localEditError.value = null
+
+  if (trimmedPollQuestion.value.length === 0) {
+    localEditError.value = 'Poll question cannot be empty.'
+    return
+  }
+
+  if (hasEmptyPollOption.value) {
+    localEditError.value = 'Poll options cannot be empty.'
+    return
+  }
+
+  if (nonEmptyPollOptions.value.length < 2) {
+    localEditError.value = 'Please provide at least 2 poll options.'
+    return
+  }
+
   postsStore.addOrUpdatePosts([{ id: props.post.id, isUpdating: true }])
   const pollPayload = {
-    question: editPollQuestion.value,
-    options_to_update: editPollOptions.value.filter((opt) => opt.id !== null),
-    options_to_add: editPollOptions.value.filter((opt) => opt.id === null),
+    question: trimmedPollQuestion.value,
+    options_to_update: nonEmptyPollOptions.value.filter((opt) => opt.id !== null),
+    options_to_add: nonEmptyPollOptions.value.filter((opt) => opt.id === null),
     options_to_delete: deletedOptionIds.value,
   }
   const formData = new FormData()
@@ -1603,28 +1642,12 @@ async function handleUpdatePoll() {
     postsStore.addOrUpdatePosts([response.data])
     isEditing.value = false
 
-    nextTick(() => {
-      centerPostInViewport()
-    })
+    // Keep scroll position stable
   } catch (err: any) {
     localEditError.value = err.response?.data?.detail || 'Failed to update poll.'
   } finally {
     postsStore.addOrUpdatePosts([{ id: props.post.id, isUpdating: false }])
   }
-}
-
-function centerPostInViewport() {
-  if (!postContainerRef.value) return
-
-  const postRect = postContainerRef.value.getBoundingClientRect()
-  const viewportHeight = window.innerHeight
-  const currentScroll = window.pageYOffset || document.documentElement.scrollTop
-  const targetScroll = currentScroll + postRect.top - viewportHeight / 2 + postRect.height / 2
-
-  window.scrollTo({
-    top: targetScroll,
-    behavior: 'smooth',
-  })
 }
 
 function linkifyContent(text: string | null | undefined): string {
@@ -1876,7 +1899,7 @@ function handleEmojiClick() {
           </button>
           <div
             v-if="showOptionsMenu"
-            class="origin-top-right absolute right-0 mt-2 w-40 md:w-44 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 border border-gray-200"
+            class="origin-top-right absolute right-0 top-full mt-2 w-40 md:w-44 min-w-[170px] max-w-[calc(100vw-1rem)] rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-10 border border-gray-200"
           >
             <div
               class="py-2"
@@ -2873,16 +2896,10 @@ function handleEmojiClick() {
               {{ localEditError }}
             </div>
 
-            <div class="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+            <div class="bg-white rounded-lg p-5 space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Poll Question</label>
-                <input
-                  type="text"
-                  v-model="editPollQuestion"
-                  placeholder="Ask a question..."
-                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 word-break-fix"
-                  maxlength="255"
-                />
+                 
               </div>
 
               <div>
@@ -2898,7 +2915,7 @@ function handleEmojiClick() {
                         type="text"
                         v-model="option.text"
                         :placeholder="`Option ${index + 1}`"
-                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 pr-10 word-break-fix"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none text-sm transition-all duration-200 pr-10 word-break-fix"
                         maxlength="100"
                       />
                       <div
@@ -2941,7 +2958,7 @@ function handleEmojiClick() {
               </button>
               <button
                 type="submit"
-                :disabled="post.isUpdating"
+                :disabled="post.isUpdating || !isPollEditValid"
                 class="px-6 py-2.5 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-lg transition-all duration-200 disabled:bg-purple-300 disabled:cursor-not-allowed text-sm shadow-md flex items-center gap-2"
               >
                 <FontAwesomeIcon

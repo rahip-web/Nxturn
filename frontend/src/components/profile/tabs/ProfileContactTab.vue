@@ -70,10 +70,14 @@ async function handleSave() {
 </script>
 
 <template>
-  <div class="space-y-6 animate-fade-in bg-white text-gray-900">
+  <div
+    class="space-y-6 animate-fade-in bg-white text-gray-900 w-full px-4 sm:px-6 lg:px-8 box-border"
+  >
     <!-- Header -->
-    <div class="flex items-center justify-between border-b pb-4">
-      <div>
+    <div
+      class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-gray-200/70 pb-5 pt-1 sm:pt-0"
+    >
+      <div class="space-y-1">
         <h3 class="text-lg font-bold text-gray-900">Contact & Privacy</h3>
         <p class="text-sm text-gray-500">Manage your contact details and visibility settings.</p>
       </div>
@@ -83,7 +87,7 @@ async function handleSave() {
         v-if="isOwnProfile"
         @click="toggleEdit"
         type="button"
-        class="flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        class="flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-colors self-start sm:self-auto"
         :class="
           isEditing
             ? 'bg-red-50 text-red-600 hover:bg-red-100'

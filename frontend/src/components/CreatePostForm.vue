@@ -1268,9 +1268,9 @@ onUnmounted(() => {
 
       <!-- Action Bar -->
       <div
-        class="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pl-10 sm:pl-14 border-t border-gray-100 pt-3 sm:pt-4"
+        class="mt-3 sm:mt-4 flex flex-row flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 sm:pt-4 ml-0 sm:pl-14"
       >
-        <div class="flex flex-wrap gap-1 sm:gap-2 -ml-1 xl:ml-0">
+        <div class="flex flex-wrap gap-1 sm:gap-2 -ml-1 sm:ml-0">
           <!-- Image Upload Button -->
           <div class="relative group">
             <label
@@ -1435,7 +1435,7 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
+        <div class="flex items-center gap-2 sm:gap-4 ml-auto">
           <div
             class="text-xs sm:text-sm text-gray-500 bg-gray-100 px-2 py-1 sm:px-3 sm:py-2 rounded-lg"
           >

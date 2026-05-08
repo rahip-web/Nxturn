@@ -2,6 +2,7 @@
 
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
+from django.db import DatabaseError, OperationalError
 from rest_framework.authtoken.models import Token
 from urllib.parse import parse_qs
 
@@ -10,7 +11,7 @@ def get_user(token_key):
     try:
         token = Token.objects.select_related('user').get(key=token_key)
         return token.user
-    except Token.DoesNotExist:
+    except (Token.DoesNotExist, OperationalError, DatabaseError):
         return AnonymousUser()
 
 class TokenAuthMiddleware:
@@ -28,7 +29,10 @@ class TokenAuthMiddleware:
 
         if token_key:
             # Get the user from the token
-            scope['user'] = await get_user(token_key)
+            try:
+                scope['user'] = await get_user(token_key)
+            except Exception:
+                scope['user'] = AnonymousUser()
         else:
             scope['user'] = AnonymousUser()
 
